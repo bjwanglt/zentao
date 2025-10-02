@@ -1,0 +1,447 @@
+{% extends 'layout/manage_view.html' %}
+{% load static %}
+{% load issue %}
+{% block css %}
+    <style>
+
+        #panel-dynamics .panel-body {
+            max-height: 350px; /* 或者你想要的高度 */
+            overflow-y: auto;
+        }
+
+        .table-right > tbody > tr > td.label-left {
+            width: 90px;
+        }
+
+        .table-right > tbody > tr > td {
+            border: 0;
+        }
+
+        .status-count {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-count .count {
+            font-size: 25px;
+        }
+
+        .status-count a {
+            text-decoration: none;
+        }
+
+        .user-item .title {
+            margin-bottom: 20px;
+        }
+
+        .user-item .avatar, .top-10 .avatar {
+            float: left;
+            margin-right: 10px;
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #304659;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+        }
+
+        .user-item .text {
+            line-height: 30px;
+        }
+
+        .top-10 .avatar {
+            margin-right: 0;
+        }
+
+        .top-10 td {
+            padding: 5px 10px;
+        }
+
+        .top-10 .table > tbody > tr > td {
+            border-top: 0;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" style="margin-top: 20px;">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-bar-chart" aria-hidden="true"></i>
+                        新增问题趋势
+                        <i class="fa fa-refresh panel-refresh pull-right"
+                           style="cursor:pointer;" title="刷新" id="refresh_trend"></i>
+                    </div>
+                    <div class="panel-body">
+                        <div id="chart" style="width:100%;min-height:200px"></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <i class="fa fa-quora" aria-hidden="true"></i>
+                                问题
+                                <i class="fa fa-refresh panel-refresh pull-right"
+                                   style="cursor:pointer;" title="刷新" id="refresh_issue_group"></i>
+                            </div>
+                            <div class="panel-body" id="panel-issue_group"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <i class="fa fa-user" aria-hidden="true"></i>
+                                项目成员
+                                <i class="fa fa-refresh panel-refresh pull-right"
+                                   style="cursor:pointer;" title="刷新" id="refresh_members"></i>
+                            </div>
+                            <div class="panel-body user-item">
+                                <div class="col-sm-12 title">创建者</div>
+                                <div class="clearfix" style="margin-bottom: 30px;" id="members_creater"></div>
+                                <div class="col-sm-12 title">参与者</div>
+                                <div id="members_joiner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default" id="panel-detail">
+                    <div class="panel-heading">
+                        <i class="fa fa-cog title-icon"></i>
+                        详细
+                        <i class="fa fa-refresh panel-refresh pull-right"
+                           style="cursor:pointer;" title="刷新" id="refresh_detail"></i>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-right">
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <div class="panel panel-default" id="panel-dynamics">
+                    <div class="panel-heading">
+                        <i class="fa fa-list-ul" aria-hidden="true"></i>
+                        动态
+                        <i class="fa fa-refresh panel-refresh pull-right"
+                           style="cursor:pointer;" title="刷新" id="refresh_dynamics"></i>
+                    </div>
+                    <div class="panel-body top-10">
+                        <table class="table">
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block js %}
+    <script src="{% static 'plugins/highcharts/highcharts.js' %}"></script>
+    <script>
+        $(function () {
+            bind_refresh()
+            // 刷新详情数据
+            refresh_detail_data()
+            // 刷新动态
+            refresh_dynamics()
+            // 刷新问题分组
+            refresh_issue_group()
+            // 刷新项目成员
+            refresh_members()
+            // 刷新问题趋势
+            Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });
+            initChart();
+
+
+        })
+
+        function initChart() {
+            // chart
+            let config = {
+                title: {
+                    text: null   // 不显示标题
+                },
+                legend: {
+                    enabled: false // 关闭图例提示
+                },
+                credits: {
+                    enabled: false // 关闭版权信息
+                },
+                yAxis: {
+                    title: {
+                        text: '问题数量' // Y周文本提示
+                    }
+                },
+                xAxis: {
+                    type: 'datetime',
+                    tickInterval: 60 * 60 * 24 * 1000,
+                    labels: {
+                        formatter: function () {
+                            return Highcharts.dateFormat('%m-%d', this.value);
+                        },
+                        rotation: -30
+                    }
+                },
+                tooltip: {
+                    headerFormat: '<b>{point.key}</b><br>',
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> 数量: {point.y} ',
+                    xDateFormat: '%Y-%m-%d',
+                },
+                plotOptions: {
+                    area: {
+                        stacking: 'normal',
+                        lineColor: '#666666',
+                        lineWidth: 1,
+                        marker: {
+                            lineWidth: 1,
+                            lineColor: '#666666'
+                        }
+                    }
+                },
+                series: [{
+                    data: []
+                }]
+            };
+            $.ajax({
+                    url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=trend',
+                    type: "GET",
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            console.log(res.errors_or_data)
+                            config.series[0].data = res.errors_or_data;
+                            let chart = Highcharts.chart('chart', config);
+                        }
+                    }
+                }
+            )
+        }
+
+        function bind_refresh() {
+            $(document).on('click', '.panel-refresh', function () {
+                const $icon = $(this);
+                const id = $icon.attr('id')
+                if ($icon.hasClass('fa-spin')) return;  // 防止重复点击
+                $icon.addClass('fa-spin');
+                // 模拟刷新延时2秒
+                setTimeout(() => {
+                    $icon.removeClass('fa-spin');
+                }, 550);
+                if (id === 'refresh_detail') {
+                    // 刷新详情
+                    refresh_detail_data()
+                }
+                if (id === 'refresh_dynamics') {
+                    // 刷新详情
+                    refresh_dynamics()
+                }
+                if (id === 'refresh_issue_group') {
+                    // 数据问题分组
+                    refresh_issue_group()
+                }
+                if (id === 'refresh_members') {
+                    refresh_members()
+                }
+                if (id === 'refresh_trend') {
+                    initChart()
+                }
+            });
+        }
+
+        function refresh_members() {
+            $.ajax({
+                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=members',
+                type: 'GET',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const $creater = $('#members_creater');
+                        const $joiner = $('#members_joiner');
+                        $creater.empty();
+                        $joiner.empty();
+                        for (const item of res.errors_or_data.data_creater) {
+                            $creater.prepend(get_members_creater_tag(item));
+                        }
+                        for (const item of res.errors_or_data.data_joiner) {
+                            $joiner.prepend(get_members_joiner_tag(item));
+                        }
+                    } else {
+                        alert('【动态】数据加载失败')
+                    }
+                }
+            })
+        }
+
+        function get_members_creater_tag(item) {
+            return $(`
+                <div class="col-sm-4">
+                    <div class="avatar">${item.user_avatar}</div>
+                    <div class="text">${item.user_name}</div>
+                </div>
+            `)
+        }
+
+        function get_members_joiner_tag(item) {
+            return $(`
+                <div class="col-sm-4">
+                    <div class="avatar">${item.user_avatar}</div>
+                    <div class="text">${item.user_name}</div>
+                </div>
+            `)
+        }
+
+        function refresh_issue_group() {
+            $.ajax({
+                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=issue_group',
+                type: 'GET',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const $tbody = $('#panel-issue_group');
+                        $tbody.empty();
+                        for (const item of res.errors_or_data) {
+                            $tbody.prepend(get_issue_tag(item));
+                        }
+                    } else {
+                        alert('【动态】数据加载失败')
+                    }
+                }
+            })
+        }
+
+        function get_issue_tag(item) {
+            return $(`
+            <div class="col-sm-4 status-count">
+                <a href="/account/manage/${item.project_id}/issue/?status=${item.status}">
+                        <div class="count">${item.num}</div>
+                        <div>${item.status_text}</div>
+                </a>
+            </div>
+            `)
+        }
+
+        function refresh_dynamics() {
+            $.ajax({
+                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=dynamics',
+                type: 'GET',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const $tbody = $('#panel-dynamics tbody');
+                        $tbody.empty();
+                        for (const item of res.errors_or_data) {
+                            $('#panel-dynamics tbody').prepend(get_dynamics_tag(item));
+                        }
+                    } else {
+                        alert('【动态】数据加载失败')
+                    }
+                }
+            })
+        }
+
+        function get_dynamics_tag(item) {
+            if (item.type === 1) {
+                return $(`
+                <tr>
+                    <td style="width: 46px;">
+                        <div class="avatar">${item.creator_initial}</div>
+                    </td>
+                    <td>
+                        <div>${item.creator__username}</div>
+                        <div>指派BUG
+                            <a href="/account/manage/${item.project_id}/issue/detail/${item.id}/">#${item.id}</a>
+                            给 ${item.assign__username}
+                        </div>
+                    </td>
+                    <td style="width: 156px;">
+                        ${item.create_time}
+                    </td>
+                </tr>
+                `)
+            } else {
+                return $(`
+                <tr>
+                    <td style="width: 46px;">
+                        <div class="avatar">${item.creator_initial}</div>
+                    </td>
+                    <td>
+                        <div>${item.creater__username}</div>
+                        <div>修改BUG
+                            <a href="/account/manage/${item.project_id}/issue/detail/${item.issues_id}/">#${item.issues_id}</a>
+                        </div>
+                        <div>
+                            修改内容: ${item.issues__desc}
+                        </div>
+                    </td>
+                    <td style="width: 156px;">
+                        ${item.create_time}
+                    </td>
+                </tr>
+                `)
+            }
+        }
+
+        function refresh_detail_data() {
+            $.ajax({
+                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=detail_data',
+                type: 'GET',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        $('#panel-detail tbody').html(get_detail_tag(res.errors_or_data));
+                    } else {
+                        alert('【详细】数据加载失败')
+                    }
+                }
+            })
+        }
+
+        function get_detail_tag(detail_data) {
+            return `
+                <tr>
+                    <td class="label-left">项目名称 ：</td>
+                    <td>${detail_data.p_name}</td>
+                </tr>
+                <tr>
+                    <td class="label-left">项目描述 ：</td>
+                    <td>${detail_data.p_desc}</td>
+                </tr>
+                <tr>
+                    <td class="label-left">创建时间 ：</td>
+                    <td>${detail_data.create_time}</td>
+                </tr>
+                <tr>
+                    <td class="label-left">项目空间 ：</td>
+                    <td>${detail_data.use_space} / ${detail_data.total_space}</td>
+                </tr>
+                <tr>
+                    <td class="label-left">套餐版本 ：</td>
+                    <td>${detail_data.set_menu}</td>
+                </tr>
+            `
+        }
+
+
+    </script>
+{% endblock %}

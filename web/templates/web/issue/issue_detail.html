@@ -1,0 +1,649 @@
+{% extends 'layout/manage_view.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+    <style>
+
+        .a_replay {
+            cursor: pointer;
+        }
+
+        .comment-area .item {
+            margin-top: 20px;
+        }
+
+        .comment-area .left-avatar {
+            float: left;
+            margin-right: 10px;
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #304659;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+        }
+
+        .comment-area .right-info {
+            padding-left: 35px;
+        }
+
+        .comment-area .right-info .desc .msg {
+            display: inline-block;
+            padding-right: 20px;
+            color: #8c8c8c;
+        }
+
+        .comment-area .child {
+            padding-left: 55px;
+        }
+
+        .comment-area .error-msg {
+            color: red;
+        }
+
+        .comment-area .reply-user {
+            display: inline-block;
+            background-color: #ddd;
+            color: black;
+            padding: 6px 8px;
+            margin-left: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .editormd-fullscreen {
+            z-index: 1001;
+        }
+
+        .load-more-link {
+            display: inline-block;
+            font-size: 15px;
+            color: #007bff;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .load-more-link:hover {
+            text-decoration: none;
+            color: #0056b3;
+            cursor: pointer;
+        }
+
+        .replay {
+            margin-left: 5px;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid clearfix" style="padding: 20px 0;">
+
+        <div class="col-sm-7">
+            <div class="panel panel-default">
+                <div class="panel-heading edit-heading">
+                    <div>
+                        <i class="fa fa-edit" aria-hidden="true"></i> 更新问题
+                        <button onclick="editData()" class="pull-right" style="background-color: #3379b6; color: white; border: black 1px solid">修改</button>
+                    </div>
+
+                </div>
+                <div class="panel-body">
+                    <form id="editForm" class="form-horizontal" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.subject.id_for_label }}"
+                                   class="col-md-2 control-label">{{ form.subject.label }}</label>
+                            <div class="col-md-10">
+                                <div>
+                                    <div>
+                                        {{ form.subject }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.module.id_for_label }}"
+                                   class="col-md-2 control-label">{{ form.module.label }}</label>
+                            <div class="col-md-10">
+                                <div>
+                                    <div>
+                                        {{ form.module }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.desc.id_for_label }}"
+                                   class="col-md-2 control-label">{{ form.desc.label }}</label>
+                            <div class="col-md-10">
+                                <div>
+                                    <div id="editor">
+                                        {{ form.desc }}
+                                    </div>
+
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group clearfix">
+
+                            <div class="col-md-6 pd-0">
+                                <label for="{{ form.status.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.status.label }}</label>
+                                <div class="col-md-8 clearfix">
+                                    <div>
+                                        {{ form.status }}
+                                    </div>
+                                    <div class="error-msg"></div>
+
+                                </div>
+                            </div>
+                            <div class="col-md-6 pd-0">
+                                <label for=" {{ form.priority.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.priority.label }}</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.priority }}
+                                    </div>
+                                    <div class="error-msg"></div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">指派给</label>
+                                <div class="col-md-8">
+                                    {{ form.assign }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">关注者</label>
+                                <div class="col-md-8">
+                                    {{ form.attention }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">开始时间</label>
+                                <div class="col-md-8">
+
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon2">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        </span>
+                                        {{ form.start_date }}
+                                    </div>
+                                    <span class="error-msg"></span>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">截止时间</label>
+                                <div class="col-md-8">
+
+                                    <div class="input-group">
+                                        <span class="input-group-addon" id="sizing-addon2">
+                                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                                        </span>
+                                        {{ form.end_date }}
+                                    </div>
+                                    <span class="error-msg"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">模式</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.mode }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label"> 父问题</label>
+                                <div class="col-md-8">
+
+                                    {{ form.parent }}
+
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-5">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-search" aria-hidden="true"></i> 讨论区
+                    <span style="float: right">评论数：<span id="ope_text_num"></span></span>
+                </div>
+                <div class="panel-body comment-area">
+
+                    <div class="comment-list">
+                        <!-- 评论展示区 -->
+                        <div class="comment-list" id="commentList">
+                        </div>
+                        <div class="text-center" id="loadMoreWrapper" style="margin-top: 20px;">
+                            <a id="loadMoreComments" class="load-more-link" data-page-num="0">
+                                查看更多评论 <i class="fa fa-angle-double-down"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="comment-text" id="commentText">
+
+                        <div class="form-group">
+                            <textarea id="content" rows="6" class="form-control"
+                                      placeholder="请输入要回复的内容"></textarea>
+                            <span class="error-msg"></span>
+                        </div>
+
+                        <input class="btn btn-primary" type="button" id="btnSubmit" style='margin-top: 10px' value="提 交">
+                        <div class="reply-user hide" id="replyUser">
+                            <span></span>
+                            <i class="fa fa-times-circle" aria-hidden="true" style="color: #9d9d9d;"></i>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="hide" id="recordTemplate">
+        <div class="item clearfix">
+            <div class="left-avatar"></div>
+            <div class="right-info">
+                <pre></pre>
+                <div class="desc">
+                    <div class="msg">
+                        <i class="fa fa-bullhorn" aria-hidden="true"></i>
+                        <span class="type"></span>
+                    </div>
+                    <div class="msg">
+                        <i class="fa fa-user-o" aria-hidden="true"></i>
+                        <span class="user"></span>
+                    </div>
+                    <div class="msg">
+                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        <span class="date"></span>
+                    </div>
+
+                    <a href="#commentText" class="reply">
+                        <i class="fa fa-commenting-o" aria-hidden="true"></i> 回复
+                    </a>
+
+                </div>
+            </div>
+            <div class="child">
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugins/editor-md/editormd.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+    <script src="{% static 'plugins/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
+    <script>
+        $(function () {
+            initDatePicker()
+            initEditorMd()
+            initSelect2()
+            initReplay(1)
+            bindReply()
+            bindCancelReplyUser()
+            bindSubmit()
+            bindClearErrormsg()
+        })
+
+        function editData(){
+            // editForm
+            $.ajax({
+                    url: "{% url 'web:issue_edit' pid=request.proid issue_id=issue_id %}",
+                    type: "POST",
+                    data: $('#editForm').serialize(),
+                    dataType: "JSON",
+                    success: function (res) {
+                        if(res.status){
+                            alert('修改成功')
+                            window.location.reload()
+                        }else{
+                            $.each(res.errors_or_data, function (k, v) {
+                                $('#id_' + k).parent().next('.error-msg').text(v[0]);
+                            })
+                        }
+                    }
+            })
+        }
+
+        function bindClearErrormsg(){
+            $('#content').click(function (){
+                $(this).next('.error-msg').text('')
+            })
+        }
+
+        function get_current_replayids(){
+            const ids = [];
+            $('[id^="replay_"]').each(function () {
+                const id = $(this).attr('id');
+                const match = id.match(/^replay_(\d+)$/);
+                if (match) {
+                    ids.push(parseInt(match[1], 10));
+                }
+            })
+            return ids
+        }
+
+        // 提交评论or回复
+        function bindSubmit() {
+            $('#btnSubmit').click(function () {
+                $("#commentText .error-msg").text("");
+                $.ajax({
+                    url: "{% url 'web:issue_replay' pid=request.proid issue_id=issue_id %}",
+                    type: "POST",
+                    data: {content: $('#content').val(), parent_id: $("#replyUser").attr('parent-id')},
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            // 插入新增节点
+                            const parent_id = res.errors_or_data.parent
+                            const username = res.errors_or_data.username
+                            let $newreplay = null
+                            let $target = null
+                            if(parent_id){
+                                $target = $(`#replay_${parent_id}`)
+                                $newreplay = createReplayNode(res.errors_or_data, true)
+                                // 判断是否已经展开回复
+                                const show_child_num = $(`#replay_${parent_id}_child`).children().length
+                                if(show_child_num > 0){
+                                    // 回复区域已经展开
+                                    $(`#replay_${parent_id}_child`).prepend($newreplay)
+                                    // 回复数+1
+                                    $replay_show_num = $(`#replay_${parent_id}_showreplay_num`)
+                                    let origin_num = $replay_show_num.text()
+                                    $replay_show_num.text(parseInt(origin_num)+1)
+                                }
+                                else{
+                                    // 回复区域未展开,触发回复区域点开,并判断是否添加“查看回复”
+                                    $replayinfo = $(`#replay_${parent_id}_showreplay`)
+                                    if(!$replayinfo.length > 0){
+                                        // "查看回复"不存在， 动态添加
+                                        $newShowReplay = createParentShowReplayNode(res.errors_or_data)
+                                        $(`#replay_${parent_id}_info`).append($newShowReplay)
+                                    }
+                                    initChildReplay(parseInt(parent_id), 1, true)
+                                }
+
+                            }else{
+                                $newreplay = createReplayNode(res.errors_or_data, false)
+                                $target = $('#commentList')
+                                $('#commentList').prepend($newreplay)
+                                let origin_num = $('#ope_text_num').text()
+                                $('#ope_text_num').text(res.errors_or_data.total_count)
+                                $('#ope_text_num').text(parseInt(origin_num)+1)
+                            }
+                            $('#replyUser').addClass('hide').removeAttr('parent-id').children('span').text("")
+                            $('#content').val('')
+                            alert('提交成功')
+                            $('html, body').animate({
+                                scrollTop: $target.offset().top
+                            }, 300); // 300ms 平滑滚动
+                        } else {
+                            $.each(res.errors_or_data, function (k, v) {
+                                $('#content').next('.error-msg').text(v[0]);
+                            })
+                        }
+                    }
+                })
+            })
+        }
+
+        // 回复点击事件
+        function bindReply(){
+            $(document).on('click',  '.a_replay',function () {
+                const id = $(this).data('cid')
+                const username = $(this).data('username')
+                let content = $(`#replay_${id}_content`).text()
+                if(content && content.length > 10){
+                    content = content.slice(0,10)+'...'
+                }
+                $('#replyUser').removeClass('hide').attr('parent-id', id).children('span').text('回复：'+username+' 内容：'+content);
+                $('html, body').animate({
+                    scrollTop: $('#content').offset().top
+                }, 300); // 300ms 平滑滚动
+            })
+        }
+
+        // 取消回复点击事件
+        function bindCancelReplyUser() {
+            $('#replyUser').click(function () {
+                $(this).addClass('hide').removeAttr('parent-id').children('span').text("");
+            })
+        }
+
+        // 字符串截取首字母并转大写
+        function first_char(val) {
+            return val.charAt(0).toUpperCase()
+        }
+
+        // 创建"查看更多回复"标签
+        function createLoadMoreNode(replay_id, page){
+            return $(`
+            <div class="text-right"  style="margin-top: 20px;" id='load_more_${replay_id}'
+                onclick="initChildReplay(${replay_id},${page},false)">
+                <a class="load-more-link" data-page-num="0">
+                    查看更多回复 <i class="fa fa-angle-double-down"></i>
+                </a>
+            </div>
+            `)
+        }
+
+        // 创建评论回复标签
+        function createReplayNode(item, ischild) {
+            item.create_time = item.create_time.slice(0,10)
+            const content = `
+                <div class="item clearfix" id='replay_${item.id}'>
+                    <div class="left-avatar">${first_char(item.username)}</div>
+                    <div class="right-info">
+                        <pre id='replay_${item.id}_content' >${item.content}</pre>
+                        <div class="desc" id='replay_${item.id}_info'>
+                            <div class="msg"><i class="fa fa-user-o"></i> ${item.username}</div>
+                            <div class="msg"><i class="fa fa-clock-o"></i> ${item.create_time}</div>
+                            <a class='a_replay' style="margin-left: 2px;" data-username="${item.username}" data-cid="${item.id}">
+                                <i class="fa fa-commenting-o"></i> 回复
+                            </a>
+                            ${item.child_num > 0 ? `
+                                <a id='replay_${item.id}_showreplay' onclick="initChildReplay(${item.id}, 1, true)" style="margin-left: 2px;cursor: pointer" data-username="${item.username}" data-cid="${item.id}" xmlns="http://www.w3.org/1999/html">
+                                    <span id='replay_${item.id}_showreplay_prefix'><i class="fa fa-angle-double-down"></i> 查看回复:</span>
+                                    <span id='replay_${item.id}_showreplay_num'>${item.child_num}</span>
+                                </a>` : ''
+            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            return $(ischild ? `<div class="child" style='padding-left: ${item.root*40}px'>${content}</div><div id='replay_${item.id}_child'></div>`
+            : `${content}<div id='replay_${item.id}_child'></div>`);
+        }
+
+        // 创建查看回复标签
+        function createParentShowReplayNode(item){
+            return $(`
+                <a id='replay_${item.parent}_showreplay' onclick="initChildReplay(${item.parent}, 1, true)" style="margin-left: 2px;cursor: pointer" data-username="${item.parent_username}" data-cid="${item.parent}" xmlns="http://www.w3.org/1999/html">
+                    <span><i class="fa fa-angle-double-down"></i> 查看回复:</span>
+                    <span id='replay_${item.parent}_showreplay_num'>1</span>
+                </a>
+            `)
+        }
+
+
+        // 加载回复信息
+        function initChildReplay(replay_id, page, need_fold) {
+            const child_count = $(`#replay_${replay_id}_child`).children().length
+            if(child_count > 0 && need_fold){
+                $(`#replay_${replay_id}_child`).empty()
+                $(`#replay_${replay_id}_showreplay`).children().first().replaceWith('<span><i class="fa fa-angle-double-down"></i> 查看回复</span>');
+
+                return
+            }
+            $(`#replay_${replay_id}_showreplay`).children().first().replaceWith('<span><i class="fa fa-angle-double-up"></i> 收起回复</span>');
+            base_ulr = "{% url 'web:issue_replay' pid=request.proid issue_id=issue_id %}"
+            if (!page) {
+                page = 1
+            }
+            url = base_ulr + `?page=${page}&parent=${replay_id}`
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const $commentList = $(`#replay_${replay_id}`)
+                        for (const item of res.errors_or_data.results) {
+                            if (get_current_replayids().includes(item.id)) {
+                                continue;
+                            }
+                            const $comment = createReplayNode(item, true)
+                            $(`#replay_${replay_id}_child`).append($comment)
+                        }
+                        // 判断是否展示加载更多选项
+                        $(`#load_more_${replay_id}`).remove()
+                        if (res.errors_or_data.has_next) {
+                            const $loadmore = createLoadMoreNode(replay_id,res.errors_or_data.next_page) // 在哪个标签下提示加载更多
+                            $(`#replay_${replay_id}_child`).append($loadmore)
+                        }
+                    }
+                }
+            })
+        }
+
+        // 加载评论信息
+        function initReplay(page) {
+            base_ulr = "{% url 'web:issue_replay' pid=request.proid issue_id=issue_id %}"
+            if (!page) {
+                page = 1
+            }
+            url = base_ulr + `?page=${page}`
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const $commentList = $('#commentList')
+                        for (const item of res.errors_or_data.results) {
+                            if (get_current_replayids().includes(item.id)) {
+                                continue;
+                            }
+                            const $comment = createReplayNode(item,false)
+                            $commentList.append($comment)
+                        }
+                        if (res.errors_or_data.has_next) {
+                            $('#loadMoreComments').data('pageNum', res.errors_or_data.next_page)
+                            $('#ope_text_num').text(res.errors_or_data.total_count)
+                        } else {
+                            $('#loadMoreWrapper').addClass('hide')
+                        }
+                    }
+                }
+            })
+        }
+
+        // 加载更多评论
+        $('#loadMoreComments').on('click', function () {
+            const page_num = $('#loadMoreComments').data('pageNum')
+            initReplay(page_num)
+        });
+
+        // 组件初始化
+        function initSelect2() {
+            $('.select2').select2({}).on('select2:select', function (e) {
+                // 选中某一项触发
+                location.href = e.params.data.id;
+            }).on('select2:unselect', function (e) {
+                // 移除某一项触发
+                location.href = e.params.data.id;
+            });
+        }
+
+        // 组件初始化
+        function initDatePicker() {
+            $('#id_start_date,#id_end_date').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: '0',
+                language: "zh-CN",
+                autoclose: true
+            });
+        }
+
+        // 组件初始化
+        function initEditorMd() {
+            editormd('editor', {
+                placeholder: "请输入内容",
+                height: 300,
+                path: "{% static 'plugins/editor-md/lib/' %}",
+                imageUpload: true,
+                imageFormats: ["jpg", 'jpeg', 'png', 'gif'],
+                imageUploadURL: "/account/manage/{{ request.proid }}/wiki/upload/?folder=bug",
+                onload: function () {
+                    this.previewing();
+                },
+                toolbarIcons: function () {
+                    return ["bold", "hr", "del", "italic", "quote", "|", "image", "preview", "watch", "fullscreen", "||", "save"]
+                },
+                toolbarCustomIcons: {
+                    save: "<input type='button' value='保 存' class='btn btn-success btn-sm' onclick='saveDesc();' />"
+                },
+            })
+        }
+
+        // 组件初始化
+        function saveDesc() {
+            alert(123)
+        }
+
+
+    </script>
+
+
+{% endblock %}

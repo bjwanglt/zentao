@@ -1,0 +1,5 @@
+<ul class="dropdown-menu">
+    {% for pro in all_pro %}
+    <li><a href="{% url 'web:issue' pid=pro.project_id %}">{{ pro.project_name }}</a></li>
+    {% endfor %}
+</ul>

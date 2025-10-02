@@ -1,0 +1,128 @@
+{% extends 'layout/manage_view.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.preview.min.css' %}">
+
+
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div style="display: flex; justify-content: space-between;">
+                    <h3 style="line-height: 30px" class="panel-title"><i class="fa fa-book"></i>&nbsp;Wiki文档</h3>
+                    <div>
+                        <a type="button" class="btn btn-success btn-sm"
+                           href="{% url 'web:wiki_add' pid=request.proid %}">新建</a>
+                        {% if wiki_obj %}
+                            <a type="button" class="btn btn-primary btn-sm"
+                               href="{% url 'web:wiki_update' pid=request.proid wid=wiki_obj.id %}">修改</a>
+                            <a type="button" class="btn btn-danger btn-sm"
+                               href="{% url 'web:wiki_delete' pid=request.proid wid=wiki_obj.id %}">删除</a>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-3" style="border-right: 1px solid #9a9898; min-height: 75vh;color: gray">
+                        <ul class="tree">
+                            <li class="has-children">
+                                <span class="toggle-icon">▶</span><span class="label">Wiki</span>
+                                <ul id="wiki_cata">
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-9" id="wiki_right">
+                        {% if wiki_obj %}
+                            <div id="previow">
+                                <textarea style="display:none;">{{ wiki_obj.content|safe }}</textarea>
+                            </div>
+
+                        {% else %}
+                            <div style="font-size: 25px;"><b>{{ request.proname }} Wiki文档库</b></div>
+                            <a href="{% url 'web:wiki_add' pid=request.proid %}"><i class="fa fa-plus-square-o"></i>&nbsp;&nbsp;新建文章</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        // 避免 editormd.markdownToHTML 强制调用 prettify 报错
+        window.prettyPrint = function () {
+        };
+    </script>
+    <script src="{% static 'plugins/editor-md/editormd.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/marked.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/prettify.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/raphael.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/underscore.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/sequence-diagram.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/flowchart.min.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/lib/jquery.flowchart.min.js' %}"></script>
+
+    <script>
+
+        $(function () {
+            initCata()
+            initPreviewMd()
+        })
+
+
+        function initPreviewMd() {
+            editormd.markdownToHTML("previow", {
+                htmlDecode: "style,script,iframe",
+            });
+
+        }
+
+        function initCata() {
+            const params = new URLSearchParams(window.location.search);
+            const wid = params.get("wid");
+
+            $.ajax({
+                url: "{% url 'web:getcata' pid=request.proid %}",
+                type: 'POST',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const catas = res.errors_or_data
+                        const $wikicata = $('#wiki_cata')
+                        let newElement = null
+                        for (const cata of catas) {
+                            if (parseInt(wid) === parseInt(cata.id)) {
+                                newElement = $(`
+                                <li class="has-children selected" id="${cata.id}">
+                                    <span class="toggle-icon">▶</span><span class="label">${cata.title}</span>
+                                    <ul></ul>
+                                </li>`)
+                            } else {
+                                newElement = $(`
+                                <li class="has-children " id="${cata.id}">
+                                    <span class="toggle-icon">▶</span><span class="label">${cata.title}</span>
+                                    <ul></ul>
+                                </li>`)
+                            }
+
+                            if (!cata.parent_id) {
+                                $wikicata.append(newElement)
+                            } else {
+                                let pid = cata.parent_id
+                                $('li#' + pid + ' > ul').append(newElement)
+                            }
+                        }
+                        bindTreeEvents($wikicata);
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

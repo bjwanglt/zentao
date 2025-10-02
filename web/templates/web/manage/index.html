@@ -1,0 +1,384 @@
+{% extends 'layout/basic_mange.html' %}
+
+{% block title %}
+    管理中心
+{% endblock %}
+
+{% block css %}
+    <style>
+        #add_pro:hover {
+            cursor: pointer;
+            color: black;
+        }
+
+        .color-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .color-swatch-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* 隐藏 radio 本体 */
+        .color-swatch-wrapper input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 圆形颜色按钮 */
+        .color-swatch {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            box-shadow: 0 0 0 1px #ccc;
+            transition: all 0.2s ease;
+        }
+
+        /* 被选中时 */
+        .color-swatch-wrapper input[type="radio"]:checked + .color-swatch::after {
+            content: "✔";
+            color: black;
+            font-weight: bold;
+            font-size: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            user-select: none;
+        }
+
+
+        .project-cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .project-card {
+            cursor: pointer;
+            border: 1px solid #ddd; /* 或 #e0e0e0 / #ccc */
+            width: 220px;
+            border-radius: 10px;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .project-card:hover {
+            border-color: #ffa500; /* 橙色边框，或换成你喜欢的颜色 */
+            border-width: 1px;
+        }
+
+        .project-card .project-name {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 120px;
+            font-size: 20px;
+        }
+
+        .project-footer {
+            background-color: white;
+            color: #666;
+            padding: 8px 10px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-footer .cancel_star {
+            color: orange;
+            margin-right: 5px;
+        }
+
+        .project-footer .cancel_star:hover {
+            color: #666; /* 灰色背景 */
+        }
+
+        .project-footer .star {
+            color: #666; /* 灰色背景 */
+            margin-right: 5px;
+        }
+
+        .project-footer .star:hover {
+            color: orange;
+        }
+
+        .teal {
+            background-color: #20b2aa;
+        }
+
+        .green {
+            background-color: #9acd32;
+        }
+
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" style="color: gray">
+        <div style="display: flex; align-items: center; width: 150px;" id="add_pro">
+            <i class="fa fa-plus-circle fa-3x"></i>
+            <span style="margin-left:8px;line-height:40px;font-size: 20px;">创建新项目</span>
+        </div>
+    </div>
+
+    <div style="margin-top: 22px">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-star"></i>&nbsp;星标项目</h3>
+            </div>
+            <div class="panel-body">
+                <div class="project-cards" id="star_cards">
+                    {% for pro in pros.star %}
+                        <div class="project-card" style="background-color: {{ pro.color }}" id="star_card_{{ pro.id }}">
+                            <div class="project-name">{{ pro.name }}</div>
+                            <div class="project-footer">
+                                <i id='{{ pro.id }}' class="fa fa-star fa-lg cancel_star"
+                                   title="取消星标"></i> {{ pro.user_name }}
+                                <span class="user-count" style="font-size: 15px"><i
+                                        class="fa fa-group"></i> {{ pro.join_count }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 22px">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-server"></i>&nbsp;我创建的项目</h3>
+            </div>
+            <div class="panel-body">
+                <div class="project-cards" id="create_cards">
+                    {% for pro in pros.create %}
+                        <div class="project-card" style="background-color: {{ pro.color }}"
+                             id="create_card_{{ pro.id }}">
+                            <div class="project-name">{{ pro.name }}</div>
+                            <div class="project-footer">
+                                <i id='{{ pro.id }}' class="fa fa-star fa-lg star" title="星标"></i> {{ pro.user_name }}
+                                <span class="user-count" style="font-size: 15px"><i
+                                        class="fa fa-group"></i> {{ pro.join_count }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 22px">
+        <div class="panel panel-success">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-handshake-o"></i>&nbsp;我参与的项目</h3>
+            </div>
+            <div class="panel-body">
+                <div class="project-cards" id="join_cards">
+                    {% for pro in pros.join %}
+                        <div class="project-card" style="background-color: {{ pro.color }}" id="join_card_{{ pro.id }}">
+                            <div class="project-name">{{ pro.name }}</div>
+                            <div class="project-footer">
+                                <i id='{{ pro.id }}' class="fa fa-star fa-lg star" title="星标"></i> {{ pro.user_name }}
+                                <span class="user-count" style="font-size: 15px"><i
+                                        class="fa fa-group"></i> {{ pro.join_count }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- 添加项目模态框 -->
+    <div class="modal fade" id="add_pro_model" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">新建项目</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="pro_form">
+                        {% for item in form %}
+                            {% if item.name != 'color' %}
+                                <div class="form-group" style="margin-bottom: 22px;">
+                                    <label for="{{ item.id_for_label }}" class="control-label">{{ item.label }}</label>
+                                    {{ item }}
+                                    <span style="position: absolute; color: red" id="id_error_{{ item.name }}"></span>
+                                </div>
+
+                            {% else %}
+                                <div class="form-group" style="margin-bottom: 22px;">
+                                    <label>{{ item.label }}</label>
+                                    <div class="color-options">
+                                        {% for radio in item %}
+                                            <label class="color-swatch-wrapper">
+                                                {{ radio.tag }}
+                                                <span class="color-swatch"
+                                                      style="background-color: {{ radio.choice_label }}"></span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <span style="position: absolute; color: red" id="id_error_{{ item.name }}"></span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="id_submit">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        $(() => {
+            bind_add_pro()
+            bind_id_submit()
+            bindStar()
+            bindCancelStar()
+            initDragSort()
+            bingCardClick()
+        })
+
+        function bind_add_pro() {
+            $('#add_pro').click(function () {
+                $('#add_pro_model').modal('show')
+            })
+        }
+
+        function bind_id_submit() {
+            $('#id_submit').click(function (e) {
+                e.preventDefault()
+                $.ajax({
+                    url: '{% url 'web:manage_pro' %}',
+                    type: 'POST',
+                    dataType: 'JSON',
+                    data: $('#pro_form').serialize(),
+                    success: (res) => {
+                        if (!res.status) {
+                            for (let error in res.errors_or_data) {
+                                $('#id_error_' + error).text(
+                                    res.errors_or_data[error][0]
+                                )
+                            }
+                        } else {
+                            window.location.reload()
+                        }
+                    }
+
+                })
+            })
+        }
+
+        function bindStar() {
+            let $star_i = $('i.star')
+            $star_i.click(function (e) {
+                e.stopPropagation();
+                let pid = $(this).attr('id')
+                let url = `/account/manage/${pid}/1/star/`;
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {
+                            window.location.reload()
+                        }
+                    }
+                })
+            })
+        }
+
+        function bindCancelStar() {
+            let $star_i = $('i.cancel_star')
+            $star_i.click(function (e) {
+                e.stopPropagation();
+                let pid = $(this).attr('id')
+                let url = `/account/manage/${pid}/0/star/`;
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {
+                            window.location.reload()
+                        }
+                    }
+                })
+            })
+        }
+
+        function initDragSort() {
+            const starPanel = document.getElementById('star_cards');
+            if (!starPanel) {
+                console.warn('拖拽初始化失败：找不到 #star-projects 元素');
+                return;
+            }
+
+            Sortable.create(starPanel, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    console.log('新顺序:', getProjectOrder());
+
+                    // 发送请求，保存顺序信息
+                    /*
+                    $.ajax({
+                        url: '/your/api/url/',
+                        method: 'POST',
+                        data: JSON.stringify({ order: getProjectOrder() }),
+                        contentType: 'application/json',
+                        success: function(res) {
+                            console.log('顺序已保存');
+                        }
+                    });
+                    */
+                }
+            });
+        }
+
+        function getProjectOrder() {
+            let ids = [];
+            $('#star_cards .project-card').each(function () {
+                const pid = $(this).find('i.cancel_star').attr('id');
+                if (pid) {
+                    ids.push(pid);
+                }
+            });
+            return ids;
+        }
+
+        function bingCardClick(){
+            $('.project-card').click(function (){
+                const pid = $(this).children('div').eq(1).children('i').eq(0).attr('id')
+                window.location.href = `/account/manage/${pid}/issue/`;
+            })
+        }
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'layout/manage_view.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div style="display: flex; justify-content: space-between;">
+                    <h3 style="line-height: 30px" class="panel-title"><i class="fa fa-book"></i>&nbsp;Wiki文档</h3>
+                    <a href="{% url 'web:wiki' pid=request.proid %}" type="button"
+                       class="btn btn-warning btn-sm">取消</a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-3" style="border-right: 1px solid #9a9898; min-height: 75vh;color: gray">
+                        <ul class="tree">
+                            <li class="has-children">
+                                <span class="toggle-icon">▶</span><span class="label">Wiki</span>
+                                <ul id="wiki_cata">
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-9">
+                        <form method="post">
+                            {% csrf_token %}
+                            {% for item in form %}
+                                <div class="form-group">
+                                    <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                                    {% if item.name == 'content' %}
+                                        <div id="editor">
+                                            {{ item }}
+                                        </div>
+                                    {% else %}
+                                        {{ item }}
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-default">提交</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugins/editor-md/editormd.min.js' %}"></script>
+    <script>
+        $(function () {
+            initCata()
+            initEdtorMd()
+        })
+
+        function initCata() {
+            $.ajax({
+                url: "{% url 'web:getcata' pid=request.proid %}",
+                type: 'POST',
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        const catas = res.errors_or_data
+                        const $wikicata = $('#wiki_cata')
+                        let newElement = null
+                        for (const cata of catas) {
+                            newElement = $(`
+                                <li class="has-children" id="${cata.id}">
+                                    <span class="toggle-icon">▶</span><span class="label">${cata.title}</span>
+                                    <ul></ul>
+                                </li>`)
+                            if (!cata.parent_id) {
+                                $wikicata.append(newElement)
+                            } else {
+                                let pid = cata.parent_id
+                                $('#' + pid + ' > ul').append(newElement)
+                            }
+                        }
+                        bindTreeEvents($wikicata);
+                    }
+                }
+            })
+        }
+
+        function initEdtorMd() {
+            // editor
+            editormd('editor', {
+                placeholder: '请输入',
+                height: '45vh',
+                path: "{% static 'plugins/editor-md/lib/' %}",
+                imageUpload: true,
+                imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+                imageUploadURL: "/account/manage/{{ request.proid }}/wiki/upload/",
+            })
+        }
+    </script>
+{% endblock %}
+

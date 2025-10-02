@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <script src='{% static 'plugins/jquery/jq-3.6.js' %}'></script>
+    <link rel='stylesheet' href="{% static 'plugins/bootstrap/bootstrap.css' %}">
+    <script src="{% static 'plugins/bootstrap/bootstrap.js' %}"></script>
+    {% block css %}{% endblock %}
+
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Tracer</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <!--
+                <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
+                -->
+                <li><a href="#">产品功能</a></li>
+                <li><a href="#">企业方案</a></li>
+                <li><a href="#">帮助文档</a></li>
+                <li><a href="#">价格</a></li>
+            </ul>
+            {% if request.session.userinfo %}
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">{{ request.session.userinfo.username }} <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url 'web:manage_index' %}">项目管理</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="{% url 'web:logout' %}">退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            {% else %}
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="{% url 'web:login' %}">登录</a></li>
+                    <li><a href="{% url 'web:register' %}">注册</a></li>
+                </ul>
+            {% endif %}
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- alert框
+<div class="alert alert-warning alert-dismissible" role="alert" style="width: 250px; position: absolute">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <strong>Warning!</strong> Better check yourself, you're not looking too good.
+</div>
+-->
+
+
+{% block content %}{% endblock %}
+
+<script>
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // 判断cookie是不是想要的
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 判断那些请求header无需携带csrf
+    function notNeedCsrf(method) {
+        return (/^(GET|HEAD|OPTIONS|TRACE|)$/).test(method)
+    }
+
+    // ajax请求的预处理, 携带csrf请求头
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!notNeedCsrf(settings.type)) {
+                xhr.setRequestHeader('X-CSRFTOKEN', getCookie('csrftoken'))
+            }
+        }
+    })
+</script>
+
+{% block js %}{% endblock %}
+</body>
+</html>

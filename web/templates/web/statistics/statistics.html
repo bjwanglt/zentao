@@ -1,0 +1,233 @@
+{% extends 'layout/manage_view.html' %}
+{% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/daterangepicker/daterangepicker.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" style="margin-top: 20px;">
+        <div>
+            <div class="input-group" style="width: 300px;">
+                <span class="input-group-addon">BUG创建时间</span>
+                <input id="rangePicker" type="text" class="form-control" style="width: 101%">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-md-8">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-bar-chart" aria-hidden="true"></i> 人员工作进度
+                        <i class="fa fa-refresh panel-refresh pull-right"
+                           style="cursor:pointer;" title="刷新" id="refresh_projectUser"></i>
+                    </div>
+                    <div class="panel-body">
+                        <div id="projectUser" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-pie-chart" aria-hidden="true"></i> 优先级统计
+                        <i class="fa fa-refresh panel-refresh pull-right"
+                           style="cursor:pointer;" title="刷新" id="refresh_priority"></i>
+                    </div>
+                    <div class="panel-body">
+                        <div id="priority" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+
+    <script src="{% static 'plugins/daterangepicker/moment.min.js' %}"></script>
+    <script src="{% static 'plugins/daterangepicker/daterangepicker.js' %}"></script>
+    <script src="{% static 'plugins/highcharts/highcharts.js' %}"></script>
+
+    <script>
+        const API_URL = "{% url 'web:statistics' pid=request.proid%}";
+        $(function () {
+            bind_refresh()
+            initDateRangePicker();
+            priority(moment().startOf('year').format('YYYY-MM-DD'), moment().add(1, 'days').format('YYYY-MM-DD'));
+            projectUser(moment().startOf('year').format('YYYY-MM-DD'), moment().add(1, 'days').format('YYYY-MM-DD'));
+        });
+
+        function initDateRangePicker() {
+            var options = {
+                startDate: moment().startOf('year'),
+                endDate: moment(),
+                maxDate: moment(),
+                alwaysShowCalendars: true,
+                showWeekNumbers: true,
+                ranges: {
+                    "今天": [moment(), moment()],
+                    '昨天': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    '最近7天': [moment().subtract(6, 'days'), moment()],
+                    '最近30天': [moment().subtract(29, 'days'), moment()],
+                    '本月': [moment().startOf('month'), moment().endOf('month')],
+                    '今年': [moment().startOf('year'), moment().endOf('year')],
+                },
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    separator: ' 至 ',
+                    applyLabel: '确定',
+                    cancelLabel: '取消',
+                    fromLabel: '开始',
+                    toLabel: '结束',
+                    customRangeLabel: '自定义',
+                    weekLabel: 'W',
+                    daysOfWeek: ['一', '二', '三', '四', '五', '六', '日'],
+                    monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+                    firstDay: 1
+                }
+            };
+
+            $('#rangePicker').daterangepicker(options, function (start, end, label) {
+                // 选择了时间之后，函数自动被触发。
+                priority(start.format('YYYY-MM-DD'), end.clone().add(1, 'days').format('YYYY-MM-DD'));
+                projectUser(start.format('YYYY-MM-DD'), end.clone().add(1, 'days').format('YYYY-MM-DD'));
+            });
+        }
+
+        function priority(start, end) {
+            let config = {
+                chart: {
+                    type: 'pie'
+                },
+                title: {
+                    text: null
+                },
+                credits: {
+                    enabled: false // 关闭版权信息
+                },
+                tooltip: {
+                    pointFormat: '{series.name}: <b>{point.y}</b>'
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: false
+                        },
+                        showInLegend: true
+                    }
+                },
+                series: [{
+                    name: '优先级',
+                    colorByPoint: true,
+                    data: []
+                }]
+            };
+            $.ajax({
+                url: API_URL,
+                type: "GET",
+                data: {start: start, end: end, data_type: 'priority'},
+                dataType: "JSON",
+                success: function (res) {
+                    if (res.status) {
+                        config.series[0].data = res.errors_or_data;
+                        Highcharts.chart('priority', config);
+                    }
+
+                }
+            })
+        }
+
+        function projectUser(start, end) {
+            let config = {
+                chart: {
+                    type: 'column'
+                },
+                title: {
+                    text: null
+                },
+                credits: {
+                    enabled: false // 关闭版权信息
+                },
+                xAxis: {
+                    categories: []
+                },
+
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: '问题数量'
+                    },
+                    stackLabels: {  // 堆叠数据标签
+                        enabled: true,
+                        style: {
+                            fontWeight: 'bold',
+                            color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
+                        }
+                    }
+                },
+                legend: {
+                    align: 'center',
+                    verticalAlign: 'top'
+
+                },
+                tooltip: {
+                    formatter: function () {
+                        return '<b>' + this.x + '</b><br/>' +
+                            this.series.name + ': ' + this.y + '<br/>' +
+                            '总量: ' + this.point.stackTotal;
+                    }
+                },
+                plotOptions: {
+                    column: {
+                        stacking: 'normal',
+                        dataLabels: {
+                            enabled: false
+                        }
+                    }
+                },
+                series: []
+            };
+            Highcharts.chart('projectUser', config);
+            $.ajax({
+                url: API_URL,
+                type: "GET",
+                data: {start: start, end: end, data_type: 'projess'},
+                dataType: "JSON",
+                success: function (res) {
+                    config.xAxis.categories = res.errors_or_data.categories;
+                    config.series = res.errors_or_data.series;
+                    Highcharts.chart('projectUser', config);
+
+                }
+            })
+        }
+
+        function bind_refresh() {
+            $(document).on('click', '.panel-refresh', function () {
+                const $icon = $(this);
+                const id = $icon.attr('id')
+                if ($icon.hasClass('fa-spin')) return;  // 防止重复点击
+                $icon.addClass('fa-spin');
+                // 模拟刷新延时2秒
+                setTimeout(() => {
+                    $icon.removeClass('fa-spin');
+                }, 550);
+                let picker = $('#rangePicker').data('daterangepicker');
+                let start = picker.startDate.format('YYYY-MM-DD');
+                let end = picker.endDate.clone().add(1, 'days').format('YYYY-MM-DD');
+                if (id === 'refresh_priority') {
+                    // 刷新优先级
+                    priority(start, end);
+                }
+                if (id === 'refresh_projectUser') {
+                    // 刷新进度
+                    projectUser(start, end);
+                }
+            });
+        }
+    </script>
+{% endblock %}

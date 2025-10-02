@@ -1,0 +1,28 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="{% static 'plugins/jquery/jq-3.6.js' %}"></script>
+</head>
+<body>
+
+123
+
+<script>
+    $.ajax({
+        url: '{% url 'test:test_put' %}',
+        type: 'PUT',
+        data: {},
+        dataType: 'JSON',
+        success: function (res) {
+            console.log(res)
+        }
+    })
+</script>
+
+
+</body>
+</html>

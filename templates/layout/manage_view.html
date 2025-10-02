@@ -1,0 +1,267 @@
+{% load static %}
+{% load title_info %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <script src='{% static 'plugins/jquery/jq-3.6.js' %}'></script>
+    <link rel='stylesheet' href="{% static 'plugins/bootstrap/bootstrap.css' %}">
+    <link rel='stylesheet' href="{% static 'plugins/font-awesome/css/font-awesome.min.css' %}">
+    <script src="{% static 'plugins/bootstrap/bootstrap.js' %}"></script>
+    <script src="{% static 'plugins/sortable/Sortable.min.js' %}"></script>
+    <style>
+        .navbar {
+            background-color: #449cf2; /* 深蓝色背景，可根据需要调整 */
+        }
+
+        .navbar .navbar-brand,
+        .navbar .nav > li > a {
+            color: #ecf0f1; /* 字体颜色，浅灰白色 */
+        }
+
+        .navbar .navbar-brand:hover,
+        .navbar .nav > li > a:hover {
+            color: #f39c12; /* 悬浮变色效果 */
+        }
+
+        .navbar .dropdown-menu > li > a {
+            color: #2c3e50;
+        }
+
+        .navbar .dropdown-menu > li > a:hover {
+            background-color: #ecf0f1;
+            color: #000;
+        }
+
+        /*树状结构*/
+        ul.tree {
+            list-style-type: none;
+            padding-left: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 14px; /* 调整整体树字体大小 */
+        }
+
+        ul.tree li {
+            position: relative;
+            margin: 4px 0;
+            cursor: default;
+            user-select: none;
+            font-size: 14px; /* 具体节点字体大小 */
+        }
+
+        ul.tree li .toggle-icon {
+            display: inline-block;
+            width: 12px;
+            margin-right: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        ul.tree li.expanded > .toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        ul.tree li .label {
+            padding: 4px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        ul.tree li .label:hover {
+            background: #f0f0f0;
+            cursor: pointer;
+        }
+
+        ul.tree ul {
+            margin-left: 16px;
+            padding-left: 10px;
+            border-left: 1px dotted #ccc;
+        }
+
+        ul.tree ul.collapsed {
+            display: none;
+        }
+
+        .tree .selected > .label {
+            background-color: #b9d2ea;
+        }
+
+        ul.tree, ul.tree li .label {
+            color: #625c5c !important;
+        }
+
+        .error_msg {
+            color: red;
+            position: absolute;
+        }
+
+        .error-msg {
+            color: red;
+            position: absolute;
+            font-size: 13px;
+        }
+
+        .left {
+            left: 0;
+        }
+
+
+    </style>
+    {% block css %}{% endblock %}
+
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Tracer</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">
+                        项目{% if request.proname %} ({{ request.proname }}) {% endif %}
+                        <span class="caret"></span></a>
+                    {% get_pro_info request %}
+                </li>
+                <li><a href="{% url 'web:issue' pid=request.proid %}">Bug</a></li>
+                <li><a href="{% url 'web:wiki' pid=request.proid %}">WIKI</a></li>
+                <li><a href="{% url 'web:file' pid=request.proid %}">文件</a></li>
+                <li><a href="{% url 'web:overview' pid=request.proid %}">概览</a></li>
+                <li><a href="{% url 'web:statistics' pid=request.proid %}">统计</a></li>
+            </ul>
+            {% if request.session.userinfo %}
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">{{ request.session.userinfo.username }} <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url 'web:manage_index' %}">项目管理</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="{% url 'web:logout' %}">退出</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            {% else %}
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="{% url 'web:login' %}">登录</a></li>
+                    <li><a href="{% url 'web:register' %}">注册</a></li>
+                </ul>
+            {% endif %}
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
+
+<!-- alert框
+<div class="alert alert-warning alert-dismissible" role="alert" style="width: 250px; position: absolute">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <strong>Warning!</strong> Better check yourself, you're not looking too good.
+</div>
+-->
+
+
+{% block content %}{% endblock %}
+
+<script>
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // 判断cookie是不是想要的
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 判断那些请求header无需携带csrf
+    function notNeedCsrf(method) {
+        return (/^(GET|HEAD|OPTIONS|TRACE|)$/).test(method)
+    }
+
+    // ajax请求的预处理, 携带csrf请求头
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!notNeedCsrf(settings.type)) {
+                xhr.setRequestHeader('X-CSRFTOKEN', getCookie('csrftoken'))
+            }
+        }
+    })
+
+    // 树状结构
+    // 计算当前元素深度（ul的嵌套层级），根ul为0，子ul为1，依次递增
+    function getULDepth(ul) {
+        let depth = 0;
+        let parent = ul.parentElement;
+        while (parent) {
+            if (parent.tagName.toLowerCase() === 'ul') depth++;
+            parent = parent.parentElement;
+        }
+        return depth;
+    }
+
+
+   function bindTreeEvents($container) {
+    $container.find('li').each(function () {
+        const $li = $(this);
+        const $childUL = $li.children('ul');
+        const $label = $li.children('.label');
+        const $toggleIcon = $li.children('.toggle-icon');
+
+        if ($childUL.length === 0) {
+            $li.addClass('no-children');
+            $label.on('click', function (e) {
+                e.stopPropagation();
+                $('.tree .selected').removeClass('selected');
+                $li.addClass('selected');
+                console.log('点击末节点：', $label.text().trim());
+            });
+            return;
+        }
+
+        $li.addClass('has-children');
+
+        // 默认全部展开
+        $childUL.removeClass('collapsed');
+        $li.addClass('expanded');
+
+        $toggleIcon.on('click', function (e) {
+            e.stopPropagation();
+            $childUL.toggleClass('collapsed');
+            $li.toggleClass('expanded');
+        });
+
+        $label.on('click', function (e) {
+            e.stopPropagation();
+            $('.tree .selected').removeClass('selected');
+            $li.addClass('selected');
+            location.href = '?wid='+$(this).parent().attr('id')
+        });
+    });
+}
+
+
+
+
+</script>
+
+{% block js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,93 @@
+{% extends 'layout/basic.html' %}
+
+{% block title %}注册{% endblock %}
+{% block css %}
+    <style>
+        .register-form {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .register-form h2 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group .btn {
+            width: 100%;
+        }
+
+        .form-group .input-group {
+            width: 100%;
+        }
+
+        .error_msg {
+            color: red;
+            position: absolute;
+        }
+
+        .left {
+            left: 0;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <form class="register-form" id="id_form" novalidate method="POST">
+            {% csrf_token %}
+            <h2>用户登录</h2>
+            {% for item in form %}
+                {% if item.name == 'code' %}
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                        <div class="input-group">
+                            {{ item }}
+                            <span class="input-group-btn">
+                                <img id='id_get_checkcode' style="width: 100px; height: 34px;"
+                                     src="{% url 'web:get_checkcode' %}" title="点击刷新">
+                            </span>
+                            <div>
+                                <span class="error_msg left">{{ item.errors.0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="form-group" style="margin-bottom: 22px;">
+                        <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                        {{ item }}
+                        <span class="error_msg">{{ item.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <button style="margin-top:12px;" class="btn btn-primary">登录</button>
+        </form>
+
+
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        $(function () {
+            // 事件绑定
+            bind_id_get_checkcode()
+        })
+
+        function bind_id_get_checkcode() {
+            $('#id_get_checkcode').click(function () {
+                let src = $(this).attr('src')
+                $(this).attr('src', src + '?')
+            })
+        }
+
+    </script>
+{% endblock %}
+
+
+
