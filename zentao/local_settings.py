@@ -1,7 +1,3 @@
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
 LANGUAGE_CODE = 'zh-hans'
 
 TIME_ZONE = 'Asia/Shanghai'
