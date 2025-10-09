@@ -15,7 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR_PARENT = Path(__file__).resolve().parent.parent.parent
-print(BASE_DIR)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -37,6 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     # 'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+
     'web.apps.WebConfig',
     'testapp.apps.TestappConfig'
 ]
@@ -144,6 +145,7 @@ NO_SESSION_CHECK_URLS = [
     '/account/get_checkcode/',
     '/account/send/sms/',
     '/account/index/',
+    '/account/get_random_username/',
 ]
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
@@ -157,6 +159,22 @@ FILE_UPLOAD_HANDLERS = [
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 ]
+
+# 讯飞星火大模型  SPARK MAX
+SPARK_API_PASSWORD = 'ldqTwpvzYwBAqDsltIqi:qHRalFIhSFxfWTUHqgIi'
+
+# channels 相关配置 ( installed app )
+ASGI_APPLICATION = 'zentao.asgi.application'
+
+# 保存用户 ？
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': ['redis://127.0.0.1:6379/6',]
+        }
+    }
+}
 
 try:
     from .local_settings import *

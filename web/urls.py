@@ -1,19 +1,24 @@
 from django.urls import path, include, re_path
-from web.views import account, promanage, prowiki, profile, issue, overview, statistics
+from web.views import account, promanage, prowiki, profile, issue, overview, statistics, spark_ai, notification
 
 urlpatterns = [
     # 用户登录相关
     path('register/', account.register, name='register'),
+    path('ask_ai/', spark_ai.ask_ai, name='ask_ai'),
     path('login/', account.login, name='login'),
     path('logout/', account.logout, name='logout'),
     path('get_checkcode/', account.get_checkcode, name='get_checkcode'),
     path('send/sms/', account.send_sms, name='send_sms'),
     path('index/', account.index, name='index'),
+    path('get_random_username/', account.get_random_username, name='get_random_username'),
+    path('notification_iframe/', notification.show_iframe, name='notification_iframe'),
 
     # 用户管理中心页面跳转
     path('manage_index/', promanage.manage_index, name='manage_index'),
     # 用户管理中心项目查询
     path('manage_pro/', promanage.manage_pro, name='manage_pro'),
+    # 邀请用户
+    path('invite/', issue.invite, name='invite'),
 
     re_path(r'^manage/(?P<pid>\d+)/', include([
         re_path(r'^(?P<startype>[01])/star/$', promanage.star, name='star'),
@@ -42,7 +47,5 @@ urlpatterns = [
         path('overview/', overview.over_view, name='overview'),
         path('statistics/', statistics.statistics, name='statistics')
     ])),
-
-    path('invite/', issue.invite, name='invite')
 
 ]

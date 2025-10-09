@@ -9,17 +9,38 @@
 </head>
 <body>
 
-123
+websocket 测试
+<br>
+<hr>
+<input type="text" id="msg"/>
+<button id="sendMsg">点击</button>
+<button id="closeConnect">关闭连接</button>
 
 <script>
-    $.ajax({
-        url: '{% url 'test:test_put' %}',
-        type: 'PUT',
-        data: {},
-        dataType: 'JSON',
-        success: function (res) {
-            console.log(res)
-        }
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/aaa/')
+
+    // 连接创建完毕后触发的回调函数（即后端  self.accept() ）
+    socket.onopen = function (event) {
+        alert('服务端连接成功')
+    }
+
+    // 接收到消息的回调函数
+    socket.onmessage = function (event) {
+        alert(event.data)
+    }
+
+    //
+    socket.onclose = function (event){
+        alert('服务端断开连接')
+    }
+
+    // 客户端向服务端发送消息
+    $('#sendMsg').click(function () {
+        socket.send($('#msg').val())
+    })
+
+    $('#closeConnect').click(function () {
+        socket.close()
     })
 </script>
 

@@ -1,73 +1,169 @@
 {% extends 'layout/basic.html' %}
 
 {% block title %}注册{% endblock %}
+
 {% block css %}
-    <style>
-        .register-form {
-            max-width: 400px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 6px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+<style>
+    body {
+        background: linear-gradient(to right, #2575fc, #6c8ebf);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
 
-        .register-form h2 {
-            margin-bottom: 30px;
-            text-align: center;
-        }
+    /* 外层容器，左右留空 */
+    .register-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        gap: 50px;
+        padding: 0 80px; /* 页面左右安全间距 */
+        box-sizing: border-box;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-        .form-group .btn {
-            width: 100%;
-        }
+    /* 左侧提示 */
+    .register-left {
+        flex: 1.2;
+        color: #fff;
+    }
 
-        .form-group .input-group {
-            width: 100%;
-        }
+    .register-left h1 {
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
 
-        .error_msg {
-            color: red;
-            position: absolute;
-        }
+    .register-left p, .register-left ul {
+        font-size: 16px;
+        line-height: 1.6;
+    }
 
-        .left {
-            left: 0;
-        }
-    </style>
+    .register-left ul {
+        list-style: disc;
+        padding-left: 20px;
+    }
+
+    /* 表单样式保持原始样式 */
+    .register-form {
+        flex: 1;
+        max-width: 450px;
+        background: #fff;
+        padding: 30px; /* 保留你原来的 padding */
+        border-radius: 12px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        position: relative;
+        top:10px
+    }
+
+    .register-form h2 {
+        margin-bottom: 30px;
+        text-align: center;
+        color: #333;
+    }
+
+    .form-group .btn {
+        width: auto; /* 保留 Bootstrap 原来的宽度 */
+    }
+
+    .form-group .input-group {
+        width: 100%;
+    }
+
+    .error_msg {
+        color: red;
+        position: absolute;
+    }
+
+    .left {
+        left: 0;
+    }
+
+    /* 验证码提示样式 */
+    #codeTip {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(40, 96, 144, 0.95);
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 8px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+        font-size: 14px;
+        z-index: 9999;
+    }
+
+    #codeTip strong {
+        font-size: 16px;
+    }
+
+    #closeTip {
+        margin-left: 10px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
 {% endblock %}
-{% block content %}
 
-    <div class="container">
-        <form class="register-form" id="id_form">
-            <h2>用户注册</h2>
-            {% for item in form %}
-                {% if item.name == 'phone' %}
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label for="{{ item.id_for_label }}">{{ item.label }}</label>
-                        <div class="input-group">
-                            {{ item }}
-                            <span class="input-group-btn">
-                              <button class="btn btn-default" type="button" id="getCodeBtn">获取验证码</button>
-                            </span>
-                            <div>
-                                <span id='id_error_{{ item.name }}' class="error_msg left"></span>
-                            </div>
+{% block content %}
+<div class="register-container">
+    <!-- 左侧提示 -->
+    <div class="register-left">
+        <h1>欢迎加入我们！</h1>
+        <p>注册后，你可以：</p>
+        <ul>
+            <li>快速使用我们的服务</li>
+            <li>获取最新活动和优惠</li>
+            <li>管理个人账户信息</li>
+            <li>体验个性化推荐</li>
+        </ul>
+        <p style="margin-top:20px; font-style:italic;">注册只需几秒钟，马上开始吧！</p>
+    </div>
+
+    <!-- 右侧表单 -->
+    <form class="register-form" id="id_form">
+        <h3 style="text-align: center">用户注册</h3>
+        {% for item in form %}
+            {% if item.name == 'phone' %}
+                <div class="form-group" style="margin-bottom: 22px;">
+                    <i class="{{ item.field.widget.attrs.icon }}"></i>
+                    <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                    <div class="input-group">
+                        {{ item }}
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" id="getCodeBtn">获取验证码</button>
+                        </span>
+                        <div>
+                            <span id='id_error_{{ item.name }}' class="error_msg left"></span>
                         </div>
                     </div>
-                {% else %}
-                    <div class="form-group" style="margin-bottom: 22px;">
-                        <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                </div>
+            {% elif item.name == 'username' %}
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <i class="{{ item.field.widget.attrs.icon }}"></i>
+                    <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                    <div class="input-group">
                         {{ item }}
-                        <span id='id_error_{{ item.name }}' class="error_msg"></span>
+                        <span class="input-group-btn">
+                          <button class="btn btn-default" type="button" id="getRandomUsername">随机</button>
+                        </span>
+                        <div>
+                            <span id='id_error_{{ item.name }}' class="error_msg left"></span>
+                        </div>
                     </div>
-                {% endif %}
-            {% endfor %}
+                </div>
+            {% else %}
+                <div class="form-group" style="margin-bottom: 22px;">
+                    <i class="{{ item.field.widget.attrs.icon }}"></i>
+                    <label for="{{ item.id_for_label }}">{{ item.label }}</label>
+                    {{ item }}
+                    <span id='id_error_{{ item.name }}' class="error_msg"></span>
+                </div>
+            {% endif %}
+        {% endfor %}
 
-            <button style="margin-top:12px;" class="btn btn-primary" id="id_btn_submit">注册</button>
-        </form>
-
-
-    </div>
+        <button style="margin-top:12px;" class="btn btn-primary" id="id_btn_submit">注册</button>
+    </form>
+</div>
 {% endblock %}
 
 {% block js %}
@@ -76,14 +172,15 @@
             // 全局变量
             window.sys_val = {
                 sid: null,
-                timeout: 5,
-                msg_prefix: '已发送 ',
+                timeout: 60,
+                msg_suffix: 's 重新发送',
                 msg_source: '获取验证码',
             }
             // 事件绑定
             bind_getcodebtn()
             bindCleanError()
             bindSubmitBtn()
+            bind_get_random_username()
         })
 
         // 倒计时
@@ -94,12 +191,40 @@
                 clearInterval(sys_val.sid)
                 $getCodeBtn.attr('disabled', false)
                 $getCodeBtn.text(sys_val.msg_source)
-                sys_val.timeout = 5
+                sys_val.timeout = 60
                 sys_val.sid = null
             } else {
-                $getCodeBtn.text(sys_val.msg_prefix + sys_val.timeout--)
+                $getCodeBtn.text(sys_val.timeout-- + sys_val.msg_suffix)
             }
+        }
 
+        // 获取随机用户名
+        function bind_get_random_username() {
+            $('#getRandomUsername').click(
+                function () {
+                    $.ajax({
+                        url: '{% url 'web:get_random_username' %}',
+                        type: 'GET',
+                        dataType: 'JSON',
+                        success: function (res) {
+                            $('#id_username').val('')
+                            $('#id_email').val('')
+                            $('#id_phone').val('')
+                            $('#id_password').val('')
+                            $('#id_confirm_password').val('')
+                            $('#id_username').val(res)
+                            $('#id_email').val(res + '@qq.com')
+                            $('#id_phone').val(res)
+                            $('#id_password').val(res)
+                            $('#id_confirm_password').val(res)
+                        },
+                        error: function (res) {
+                            console.log(res)
+                            alert('稍后重试')
+                        }
+                    })
+                }
+            )
         }
 
         // 发送验证码
@@ -114,7 +239,10 @@
                     dataType: 'JSON',
                     success: function (res) {
                         if (res.status) {
-                            alert('发送成功')
+                            // alert('发送成功')
+                            // showCodeModal(res.errors_or_data)
+                            // showCodeToast(res.errors_or_data);
+                            showCodeTip(res.errors_or_data)
                             const $getCodeBtn = $('#getCodeBtn')
                             $getCodeBtn.attr('disabled', true)
                             if (!sys_val.sid) {
@@ -164,8 +292,46 @@
             })
         }
 
+        // 弹窗展示验证码
+        function showCodeTip(code) {
+            // 先移除旧提示
+            $('#codeTip').remove();
+
+            // 创建提示 HTML
+            const tipHtml = `
+        <div id="codeTip" style="
+            position: fixed;
+            top: 55px;
+            right: 20px;
+            background: #286090;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        ">
+            验证码: <strong>${code}</strong>
+            <span id="closeTip" style="margin-left:10px; cursor:pointer;">&times;</span>
+        </div>
+    `;
+
+            $('body').append(tipHtml);
+
+            // 点击叉号关闭
+            $('#closeTip').click(function () {
+                $('#codeTip').fadeOut(200, function () {
+                    $(this).remove();
+                });
+            });
+
+            // 3 秒后自动消失
+            setTimeout(function () {
+                $('#codeTip').fadeOut(200, function () {
+                    $(this).remove();
+                });
+            }, 3000);
+        }
+
+
     </script>
 {% endblock %}
-
-
-

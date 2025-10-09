@@ -1,14 +1,16 @@
 {% extends 'layout/basic_mange.html' %}
-
+{% load static %}
+{% load ai_tags %}
 {% block title %}
     管理中心
 {% endblock %}
 
 {% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/ai/ai.css' %}">
     <style>
         #add_pro:hover {
             cursor: pointer;
-            color: black;
+        {#color: black;#}
         }
 
         .color-options {
@@ -124,13 +126,11 @@
         .green {
             background-color: #9acd32;
         }
-
-
     </style>
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid" style="color: gray">
+    <div class="container-fluid" style="color: gray; margin-top: 22px;">
         <div style="display: flex; align-items: center; width: 150px;" id="add_pro">
             <i class="fa fa-plus-circle fa-3x"></i>
             <span style="margin-left:8px;line-height:40px;font-size: 20px;">创建新项目</span>
@@ -138,21 +138,31 @@
     </div>
 
     <div style="margin-top: 22px">
-        <div class="panel panel-warning">
+        <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title"><i class="fa fa-star"></i>&nbsp;星标项目</h3>
+                <h3 class="panel-title"><i class="fa fa-star"></i>&nbsp;置顶项目</h3>
             </div>
             <div class="panel-body">
                 <div class="project-cards" id="star_cards">
                     {% for pro in pros.star %}
-                        <div class="project-card" style="background-color: {{ pro.color }}" id="star_card_{{ pro.id }}">
-                            <div class="project-name">{{ pro.name }}</div>
+                        <div class="project-card" style="background-color: {{ pro.color }}" id="star_card_{{ pro.id }}"
+                             data-id="{{ pro.id }}">
+                            <div class="project-name" data-id="{{ pro.id }}">{{ pro.name }}</div>
                             <div class="project-footer">
-                                <i id='{{ pro.id }}' class="fa fa-star fa-lg cancel_star"
-                                   title="取消星标"></i> {{ pro.user_name }}
-                                <span class="user-count" style="font-size: 15px"><i
-                                        class="fa fa-group"></i> {{ pro.join_count }}</span>
+                                <div class="left-group">
+                                    <i id='{{ pro.id }}' class="fa fa-star fa-lg cancel_star"
+                                       title="取消星标"></i>
+                                    <span class="user-count" style="font-size: 15px"><i
+                                            class="fa fa-group"></i> {{ pro.join_count }}</span>
+                                </div>
+                                <div class="right-group">
+                                    <span class="user-count">
+                                        <i class="fa fa-sign-in"></i>
+                                        <span style="font-weight: bold;">点击进入</span>
+                                    </span>
+                                </div>
                             </div>
+
                         </div>
                     {% endfor %}
                 </div>
@@ -162,7 +172,7 @@
     </div>
 
     <div style="margin-top: 22px">
-        <div class="panel panel-info">
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title"><i class="fa fa-server"></i>&nbsp;我创建的项目</h3>
             </div>
@@ -170,12 +180,20 @@
                 <div class="project-cards" id="create_cards">
                     {% for pro in pros.create %}
                         <div class="project-card" style="background-color: {{ pro.color }}"
-                             id="create_card_{{ pro.id }}">
-                            <div class="project-name">{{ pro.name }}</div>
+                             id="create_card_{{ pro.id }}" data-id="{{ pro.id }}">
+                            <div class="project-name" data-id="{{ pro.id }}">{{ pro.name }}</div>
                             <div class="project-footer">
-                                <i id='{{ pro.id }}' class="fa fa-star fa-lg star" title="星标"></i> {{ pro.user_name }}
-                                <span class="user-count" style="font-size: 15px"><i
-                                        class="fa fa-group"></i> {{ pro.join_count }}</span>
+                                <div class="left-group">
+                                    <i id='{{ pro.id }}' class="fa fa-star fa-lg star" title="星标"></i>
+                                    <span class="user-count" style="font-size: 15px"><i
+                                            class="fa fa-group"></i> {{ pro.join_count }}</span>
+                                </div>
+                                <div class="right-group">
+                                    <span class="user-count">
+                                        <i class="fa fa-sign-in"></i>
+                                        <span style="font-weight: bold;">点击进入</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
@@ -186,19 +204,28 @@
     </div>
 
     <div style="margin-top: 22px">
-        <div class="panel panel-success">
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title"><i class="fa fa-handshake-o"></i>&nbsp;我参与的项目</h3>
             </div>
             <div class="panel-body">
                 <div class="project-cards" id="join_cards">
                     {% for pro in pros.join %}
-                        <div class="project-card" style="background-color: {{ pro.color }}" id="join_card_{{ pro.id }}">
-                            <div class="project-name">{{ pro.name }}</div>
+                        <div class="project-card" style="background-color: {{ pro.color }}" id="join_card_{{ pro.id }}"
+                             data-id="{{ pro.id }}">
+                            <div class="project-name" data-id="{{ pro.id }}">{{ pro.name }}</div>
                             <div class="project-footer">
-                                <i id='{{ pro.id }}' class="fa fa-star fa-lg star" title="星标"></i> {{ pro.user_name }}
-                                <span class="user-count" style="font-size: 15px"><i
-                                        class="fa fa-group"></i> {{ pro.join_count }}</span>
+                                <div class="left-group">
+                                    <i id='{{ pro.id }}' class="fa fa-star fa-lg star" title="星标"></i>
+                                    <span class="user-count" style="font-size: 15px"><i
+                                            class="fa fa-group"></i> {{ pro.join_count }}</span>
+                                </div>
+                                <div class="right-group">
+                                    <span class="user-count">
+                                        <i class="fa fa-sign-in"></i>
+                                        <span style="font-weight: bold;">点击进入</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
@@ -251,9 +278,66 @@
             </div>
         </div>
     </div>
+
+    <div id="project-tooltip" style="
+    position: absolute;
+    display: none;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 9999;
+    max-width: 300px;">
+
+    </div>
+
+    <div id="loading" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;">
+        <div style="
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        ">
+        </div>
+        <div style="
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            color: #fff;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);">
+            &nbsp;&nbsp;项目环境准备中，请稍候…
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    {# 聊天对话窗 #}
+    {% ai_dialog %}
+
+
 {% endblock %}
 
 {% block js %}
+    <script src="{% static 'plugins/ai/ai.js' %}"></script>
     <script>
         $(() => {
             bind_add_pro()
@@ -262,7 +346,59 @@
             bindCancelStar()
             initDragSort()
             bingCardClick()
+            bind_show_pinfo()
+            // 初始化AI聊天窗口
+            init_ai_events()
         })
+
+        function bind_show_pinfo() {
+            $('.project-name').hover(function (e) {
+                // 鼠标进入
+                const card = $(this);
+                const projectId = card.data('id');
+
+                // 显示 loading
+                const tooltip = $('#project-tooltip');
+                tooltip.text('加载中...').show();
+
+                // AJAX 请求后台接口获取详细信息
+                /*
+                $.ajax({
+                    url: '/api/project_detail/',  // 你后台提供的接口
+                    method: 'GET',
+                    data: {id: projectId},
+                    success: function (data) {
+                        // data 是返回的详细信息
+                        tooltip.html('<strong>' + data.name + '</strong><br>' + data.description);
+                    },
+                    error: function () {
+                        tooltip.text('获取信息失败');
+                    }
+                });
+                */
+                tooltip.html(`
+                    <div style="font-weight:bold; margin-bottom:5px;"><i class="fa fa-info-circle"></i> 项目统计</div>
+                    <ul style="padding-left: 18px; margin: 0;">
+                        <li>已解决问题: ${projectId} </li>
+                        <li>待解决问题: ${projectId} </li>
+                        <li>创建时间: ${projectId} </li>
+                    </ul>
+                `);
+
+
+            }, function () {
+                // 鼠标离开，隐藏 tooltip
+                $('#project-tooltip').hide();
+            });
+
+            // 鼠标移动时更新 tooltip 位置
+            $('.project-card').mousemove(function (e) {
+                $('#project-tooltip').css({
+                    top: e.pageY + 10 + 'px',  // tooltip 离鼠标下方 10px
+                    left: e.pageX + 10 + 'px'  // tooltip 离鼠标右侧 10px
+                });
+            });
+        }
 
         function bind_add_pro() {
             $('#add_pro').click(function () {
@@ -273,6 +409,8 @@
         function bind_id_submit() {
             $('#id_submit').click(function (e) {
                 e.preventDefault()
+                // 显示加载提示
+                $('#loading').css('display', 'flex');
                 $.ajax({
                     url: '{% url 'web:manage_pro' %}',
                     type: 'POST',
@@ -288,8 +426,11 @@
                         } else {
                             window.location.reload()
                         }
+                    },
+                    complete: () => {
+                        // 隐藏加载提示
+                        $('#loading').hide();
                     }
-
                 })
             })
         }
@@ -372,9 +513,9 @@
             return ids;
         }
 
-        function bingCardClick(){
-            $('.project-card').click(function (){
-                const pid = $(this).children('div').eq(1).children('i').eq(0).attr('id')
+        function bingCardClick() {
+            $('.project-card').click(function () {
+                const pid = $(this).data('id')
                 window.location.href = `/account/manage/${pid}/issue/`;
             })
         }

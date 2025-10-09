@@ -1,24 +1,67 @@
 {% extends 'layout/basic.html' %}
 
-{% block title %}注册{% endblock %}
+{% block title %}登录{% endblock %}
+
 {% block css %}
     <style>
-        .register-form {
-            max-width: 400px;
+        body {
+            background: linear-gradient(to right, #2575fc, #6c8ebf);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        /* 外层容器，左右留空 */
+        .register-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            gap: 50px;
+            padding: 0 80px; /* 页面左右安全间距 */
+            box-sizing: border-box;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+
+        /* 左侧提示 */
+        .register-left {
+            flex: 1.2;
+            color: #fff;
+        }
+
+        .register-left h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .register-left p, .register-left ul {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .register-left ul {
+            list-style: disc;
+            padding-left: 20px;
+        }
+
+        /* 表单样式保持原始样式 */
+        .register-form {
+            flex: 1;
+            max-width: 450px;
             background: #fff;
             padding: 30px;
-            border-radius: 6px;
+            border-radius: 12px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .register-form h2 {
             margin-bottom: 30px;
             text-align: center;
+            color: #333;
         }
 
         .form-group .btn {
-            width: 100%;
+            width: auto; /* 保留原来的 Bootstrap 样式 */
         }
 
         .form-group .input-group {
@@ -35,12 +78,26 @@
         }
     </style>
 {% endblock %}
-{% block content %}
 
-    <div class="container">
+{% block content %}
+    <div class="register-container">
+        <!-- 左侧提示 -->
+        <div class="register-left">
+            <h1>欢迎回来！</h1>
+            <p>登录后，你可以：</p>
+            <ul>
+                <li>快速访问个人信息</li>
+                <li>管理账户设置</li>
+                <li>查看最新活动和优惠</li>
+                <li>体验个性化推荐</li>
+            </ul>
+            <p style="margin-top:20px; font-style:italic;">请输入账户信息登录，即刻开始！</p>
+        </div>
+
+        <!-- 右侧表单 -->
         <form class="register-form" id="id_form" novalidate method="POST">
             {% csrf_token %}
-            <h2>用户登录</h2>
+            <h3 style="text-align: center">用户登录</h3>
             {% for item in form %}
                 {% if item.name == 'code' %}
                     <div class="form-group" style="margin-bottom: 25px;">
@@ -48,9 +105,9 @@
                         <div class="input-group">
                             {{ item }}
                             <span class="input-group-btn">
-                                <img id='id_get_checkcode' style="width: 100px; height: 34px;"
-                                     src="{% url 'web:get_checkcode' %}" title="点击刷新">
-                            </span>
+                            <img id='id_get_checkcode' style="width: 100px; height: 34px;"
+                                 src="{% url 'web:get_checkcode' %}" title="点击刷新">
+                        </span>
                             <div>
                                 <span class="error_msg left">{{ item.errors.0 }}</span>
                             </div>
@@ -67,15 +124,13 @@
 
             <button style="margin-top:12px;" class="btn btn-primary">登录</button>
         </form>
-
-
     </div>
 {% endblock %}
 
 {% block js %}
     <script>
         $(function () {
-            // 事件绑定
+            // 验证码点击刷新
             bind_id_get_checkcode()
         })
 
@@ -85,9 +140,5 @@
                 $(this).attr('src', src + '?')
             })
         }
-
     </script>
 {% endblock %}
-
-
-

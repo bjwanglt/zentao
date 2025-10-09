@@ -24,7 +24,6 @@ def handle_pro_info(request: HttpRequest):
         values('project_id', 'star', 'user_name', 'user_role')
     pro_detail = models.Project.objects.filter(id__in=[p.get('project_id') for p in all_pro]).all()
     json_data = serializers.serialize("json", pro_detail)
-    print(json_data)
     pro_detail = [{
         'id': p.id,
         'join_count': p.join_count,

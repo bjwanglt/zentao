@@ -21,6 +21,7 @@ import re
 
 from web.form.account_forms import login_form
 from io import BytesIO
+from web.signals import user_register_sl
 
 
 def register(request: HttpRequest):
@@ -52,6 +53,7 @@ def register(request: HttpRequest):
                     price=0, start_time=datetime.datetime.now(), end_time=None,
                     create_time=datetime.datetime.now()
                 )
+                # 刷新用户信息缓存, 由信号量操作
                 res.status = True
                 res.errors_or_data = reverse('web:login')
         except Exception as e:
@@ -77,7 +79,7 @@ def send_sms(request: HttpRequest):
     code = random.randint(1000, 9999)
     print(f'{code=}')
     try:
-        assert code % 2 == 0, '随机报错'
+        # assert code % 2 == 0, '随机报错'
         get_redis_connection('default').set(phone, code, ex=5 * 60)
     except Exception as e:
         print(e)
@@ -116,7 +118,7 @@ def login(request: HttpRequest):
         # 登录成功，记录session, 页面跳转
         request.session['userinfo'] = dict(userid=user_obj.id, username=user_obj.username)
         request.session.set_expiry(60 * 60 * 24 * 14)
-        return redirect(reverse('web:index'))
+        return redirect(reverse('web:manage_index'))
 
 
 def get_checkcode(request: HttpRequest):
@@ -124,7 +126,7 @@ def get_checkcode(request: HttpRequest):
     print(f'{code=}')
     stream = BytesIO()
     img.save(stream, 'png')
-    request.session['check_code'] = code
+    request.session['check_code'] = code  # 这也会触发所谓 滑动过期
     request.session.set_expiry(60)  # 60秒过期
     return HttpResponse(stream.getvalue())
 
@@ -136,3 +138,11 @@ def index(request: HttpRequest):
 def logout(request: HttpRequest):
     request.session.flush()
     return redirect(reverse('web:login'))
+
+
+def get_random_username(request: HttpRequest):
+    username = '1865500' + f'{random.randint(0, 9999):>04}'
+    while models.UserInfo.objects.filter(username=username).count():
+        username = '1865500' + f'{random.randint(0, 9999):>04}'
+    print(username)
+    return HttpResponse(username)

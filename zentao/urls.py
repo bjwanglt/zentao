@@ -27,7 +27,7 @@ urlpatterns = [
     # path('admin/', admin.site.urls),
 
     # 测试用  可忽略
-    # path('test/', include(('testapp.urls', 'test'), )),
+    path('test/', include(('testapp.urls', 'test'), )),
 
     # 默认路径, 重定向到登录
     path('', to_login),

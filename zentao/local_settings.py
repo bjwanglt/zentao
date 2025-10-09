@@ -7,7 +7,8 @@ USE_TZ = False
 # mysql配置
 DATABASES = {
     'default': {
-        'ENGINE': 'dj_db_conn_pool.backends.mysql',  # django.db.backends.mysql   django.db.backends.base.base.BaseDatabaseWrapper
+        'ENGINE': 'dj_db_conn_pool.backends.mysql',
+        # django.db.backends.mysql   django.db.backends.base.base.BaseDatabaseWrapper
         'NAME': 'zentao',
         'USER': 'root',
         'PASSWORD': 'mysql123',
@@ -26,7 +27,20 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        "LOCATION": 'redis://127.0.0.1:6379',
+        "LOCATION": 'redis://127.0.0.1:6379/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            # 'SERIALIZER': 'django_redis.serializers.pickle.PickleSerializer',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100,
+                # "decode_responses": True,  # 自动转化字节为字符
+            },
+            # 'PASSWORD':'XXX'
+        }
+    },
+    'offline_msgs': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        "LOCATION": 'redis://127.0.0.1:6379/6',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             # 'SERIALIZER': 'django_redis.serializers.pickle.PickleSerializer',

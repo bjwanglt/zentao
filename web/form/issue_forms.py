@@ -14,8 +14,7 @@ class IssusForm(BootstrapMixin, forms.ModelForm):
         # self.fields.get('assign').queryset = models.UserInfo.objects.exclude(id=request.userid)
         # 指派和关注的用户需要归属当前项目
         assign_list = [('', '--------')]
-        project_user_info = models.ProjectUser.objects.filter(project_id=request.proid).values_list('user_id',
-                                                                                                    'user_name')
+        project_user_info = models.ProjectUser.objects.filter(project_id=request.proid).values_list('user_id','user_name')
         assign_list.extend(project_user_info)
         self.fields.get('assign').choices = assign_list
         self.fields.get('attention').choices = project_user_info

@@ -1,13 +1,130 @@
 {% extends 'layout/basic.html' %}
 {% load static %}
 
-{% block title %}首页{% endblock %}
+{% block title %}首页 - 企业研发管理平台{% endblock %}
 
+{% block css %}
+    <style>
+        /* 全屏Hero */
+        .hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url('{% static 'img/index/backend.jpg' %}') center/cover no-repeat;
+            height: 55vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+        }
 
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
 
-{% block content %}
-    <img src="{% static 'img/back2.jpg' %}" style="max-width: 110%; height: auto; max-height: 91vh; margin-left: 15%;">
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .hero .btn {
+            border-radius: 50px;
+            padding: 10px 30px;
+            font-size: 1.2rem;
+        }
+
+        /* 功能卡片区 */
+        .feature-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card img {
+            width: 60px;
+            margin-bottom: 20px;
+        }
+
+        /* 客户Logo */
+        .clients img {
+            max-height: 50px;
+            margin: 20px;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+        }
+
+        .clients img:hover {
+            filter: grayscale(0%);
+        }
+
+        /* 页脚 */
+        footer {
+            background: #f8f9fa;
+            padding: 40px 0;
+        }
+    </style>
 {% endblock %}
 
+{% block content %}
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>提升研发效率，驱动企业创新</h1>
+            <p>一站式研发管理平台，让团队协作更高效</p>
+            {#        <a href="#features" class="btn btn-primary btn-lg">立即体验</a>#}
+        </div>
+    </section>
+
+    <!-- 功能区 -->
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">核心功能</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card">
+                        <img src="{% static 'img/index/project.png' %}" alt="项目管理">
+                        <h5 class="card-title">项目管理</h5>
+                        <p class="card-text">可视化项目管理，清晰掌握项目进度。</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card">
+                        <img src="{% static 'img/index/task.png' %}" alt="任务协作">
+                        <h5 class="card-title">任务协作</h5>
+                        <p class="card-text">团队任务分配和跟踪，协作效率提升。</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card feature-card">
+                        <img src="{% static 'img/index/combo-chart.png' %}" alt="数据统计">
+                        <h5 class="card-title">数据统计</h5>
+                        <p class="card-text">可视化报表，洞察团队和项目状态。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="text-center">
+        <div class="container">
+            <p>&copy; 2025 企业研发管理平台 | 版权所有</p>
+            <p>
+                <a href="#">关于我们</a> |
+                <a href="#">隐私政策</a> |
+                <a href="#">联系我们</a>
+            </p>
+        </div>
+    </footer>
+
+{% endblock %}
 
 

@@ -1,8 +1,10 @@
 {% extends 'layout/manage_view.html' %}
 {% load static %}
+{% load ai_tags %}
 {% load page_info %}
 {% load issue %}
 {% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/ai/ai.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
@@ -112,14 +114,12 @@
                         <tr>
                             <td class="number">
                                 <i class="fa fa-circle text-{{ item.priority }}"></i>
-                                <a target="_blank"
-                                   href="{% url 'web:issue_detail' pid=request.proid issue_id=item.id %}">
+                                <a href="{% url 'web:issue_detail' pid=request.proid issue_id=item.id %}">
                                     <b> {% str_rjust item.id %} </b></a>
                             </td>
                             <td class="issue">
                                 <div>
-                                    <a target="_blank"
-                                       href="{% url 'web:issue_detail' pid=request.proid issue_id=item.id %}">{{ item.subject }}</a>
+                                    <a href="{% url 'web:issue_detail' pid=request.proid issue_id=item.id %}">{{ item.subject }}</a>
                                 </div>
                                 <div class="tags">
                                     <span class="type">
@@ -154,10 +154,10 @@
                                         <span><i class="fa fa-calendar"
                                                  aria-hidden="true"></i> {{ item.latest_update_datetime }} 更新</span>
                                     {% endif %}
-{#                                    {% if item.start_date %}#}
-{#                                        <span><i class="fa fa-calendar"#}
-{#                                                 aria-hidden="true"></i> {{ item.start_date }} 开始</span>#}
-{#                                    {% endif %}#}
+                                    {#                                    {% if item.start_date %}#}
+                                    {#                                        <span><i class="fa fa-calendar"#}
+                                    {#                                                 aria-hidden="true"></i> {{ item.start_date }} 开始</span>#}
+                                    {#                                    {% endif %}#}
                                     {% if item.end_date %}
                                         <span><i class="fa fa-calendar"
                                                  aria-hidden="true"></i> {{ item.end_date }} 截止</span>
@@ -382,10 +382,14 @@
         </div>
     </div>
 
+    {# 聊天对话窗 #}
+    {#    {% ai_dialog %}   #}
+
 
 {% endblock %}
 
 {% block js %}
+    <script src="{% static 'plugins/ai/ai.js' %}"></script>
     <script src="{% static 'plugins/editor-md/editormd.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
@@ -395,7 +399,6 @@
     <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
 
     <script>
-
         $(function () {
             initDatePicker()
             bindBootStrapShownEvent()
@@ -420,7 +423,7 @@
             const textInput = $('#inviteUrl')[0]; // document.getElementById('inviteUrl')
             textInput.select();
             document.execCommand("Copy");
-            alert('复制成功');
+            alert('复制成功，请提示成员登录系统后再访问邀请链接');
         }
 
         function get_invite_url() {

@@ -13,6 +13,7 @@ class wiki_form(BootstrapMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         project_wiki = list(models.Wiki.objects.filter(project_id=request.proid).values_list('id', 'title'))
         self.fields['parent_id'].choices = [(None, '请选择')] + project_wiki
+        self.fields['content'].required = False
 
     class Meta:
         model = models.Wiki

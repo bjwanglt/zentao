@@ -10,36 +10,119 @@
     <link rel='stylesheet' href="{% static 'plugins/font-awesome/css/font-awesome.min.css' %}">
     <script src="{% static 'plugins/bootstrap/bootstrap.js' %}"></script>
     <script src="{% static 'plugins/sortable/Sortable.min.js' %}"></script>
+
     <style>
+        /* ---------- 导航栏整体 ---------- */
         .navbar {
-            background-color: #449cf2; /* 深蓝色背景，可根据需要调整 */
+            background-color: white;
+            border: none;
+            border-radius: 0;
+            margin-bottom: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .navbar .navbar-brand,
+        /* ---------- 品牌样式 ---------- */
+        .navbar .navbar-brand {
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'Arial Black', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            padding: 15px 20px;
+            color: black !important;
+            transition: all 0.3s ease;
+        }
+
+        .navbar .navbar-brand:hover {
+            color: #2d8ffd !important;
+            transform: scale(1.05);
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ---------- 主导航 ---------- */
         .navbar .nav > li > a {
-            color: #ecf0f1; /* 字体颜色，浅灰白色 */
+            font-weight: 500;
+            font-size: 15px;
+            padding: 15px 20px;
+            color: black;
+            transition: all 0.3s ease;
         }
 
-        .navbar .navbar-brand:hover,
-        .navbar .nav > li > a:hover {
-            color: #f39c12; /* 悬浮变色效果 */
+        .navbar .nav > li > a:hover,
+        .navbar .nav > li > a:focus {
+            background-color: rgba(68, 156, 242, 0.1);
+            color: black;
+        }
+
+        /* ---------- 下拉菜单 ---------- */
+        .navbar .dropdown-menu {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            padding: 8px 0;
+            margin-top: 5px;
+            min-width: 200px;
+            background: white;
+            animation: dropdownFade 0.3s ease;
+        }
+
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .navbar .dropdown-menu > li > a {
-            color: #2c3e50;
+            color: #555;
+            padding: 12px 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
         }
 
         .navbar .dropdown-menu > li > a:hover {
-            background-color: #ecf0f1;
-            color: #000;
+            background: transparent !important;
+            color: #449cf2 !important;
         }
 
-        /*树状结构*/
+        .navbar .dropdown .caret {
+            margin-left: 5px;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar .dropdown.open .caret {
+            transform: rotate(180deg);
+        }
+
+        .navbar .navbar-right .dropdown-menu {
+            right: 0;
+            left: auto;
+        }
+
+        .nav > li.dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* 当前选中状态 */
+        .navbar .nav > li.active > a {
+            background-color: #f0f8ff !important;
+            border-bottom: 2px solid #449cf2;
+        }
+
+        /* ---------- 树状结构 ---------- */
         ul.tree {
             list-style-type: none;
             padding-left: 20px;
             font-family: Arial, sans-serif;
-            font-size: 14px; /* 调整整体树字体大小 */
+            font-size: 14px;
         }
 
         ul.tree li {
@@ -47,7 +130,6 @@
             margin: 4px 0;
             cursor: default;
             user-select: none;
-            font-size: 14px; /* 具体节点字体大小 */
         }
 
         ul.tree li .toggle-icon {
@@ -66,7 +148,6 @@
             padding: 4px 6px;
             border-radius: 4px;
             display: inline-block;
-            font-size: 14px;
         }
 
         ul.tree li .label:hover {
@@ -92,25 +173,60 @@
             color: #625c5c !important;
         }
 
-        .error_msg {
-            color: red;
-            position: absolute;
-        }
-
         .error-msg {
             color: red;
             position: absolute;
             font-size: 13px;
         }
 
-        .left {
-            left: 0;
+        /* 消息提醒图标 */
+        #message-indicator {
+            transition: all 0.3s ease;
+            position: relative;
         }
 
+        #message-indicator:hover {
+            background-color: rgba(68, 156, 242, 0.1) !important;
+            color: #449cf2 !important;
+        }
 
+        /* 徽章样式 */
+        #indicator-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+
+        /* 徽章脉冲动画 */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* 确保消息图标与其他导航项对齐 */
+        #message-indicator-container > a {
+            display: flex;
+            align-items: center;
+            height: 50px;
+        }
     </style>
     {% block css %}{% endblock %}
-
 </head>
 <body>
 <nav class="navbar navbar-default">
@@ -123,7 +239,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">Tracer</a>
+            <a class="navbar-brand" href="{% url 'web:index' %}">Tracer</a>
         </div>
 
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
@@ -131,8 +247,10 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">
-                        项目{% if request.proname %} ({{ request.proname }}) {% endif %}
-                        <span class="caret"></span></a>
+                        <i class="fa fa-folder-open"></i> 项目{% if request.proname %} ({{ request.proname }}
+                        ) {% endif %}
+                        <span class="caret"></span>
+                    </a>
                     {% get_pro_info request %}
                 </li>
                 <li><a href="{% url 'web:issue' pid=request.proid %}">Bug</a></li>
@@ -141,47 +259,52 @@
                 <li><a href="{% url 'web:overview' pid=request.proid %}">概览</a></li>
                 <li><a href="{% url 'web:statistics' pid=request.proid %}">统计</a></li>
             </ul>
+
             {% if request.session.userinfo %}
                 <ul class="nav navbar-nav navbar-right">
+                    <li id="message-indicator-container">
+                        <a href="javascript:void(0)" id="message-indicator"
+                           style="position: relative; padding: 15px 12px !important;">
+                            <i class="fa fa-bell"></i>
+                            <span id="indicator-badge" style="
+                                background: #ff4757;
+                                color: white;
+                            ">0</span>
+                        </a>
+                    </li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-                           aria-expanded="false">{{ request.session.userinfo.username }} <span class="caret"></span></a>
+                           aria-expanded="false">
+                            <i class="fa fa-user"></i> {{ request.session.userinfo.username }}
+                            <span class="caret"></span>
+                        </a>
                         <ul class="dropdown-menu">
-                            <li><a href="{% url 'web:manage_index' %}">项目管理</a></li>
+                            <li><a href="{% url 'web:manage_index' %}"><i class="fa fa-tasks"></i> 项目管理</a></li>
                             <li role="separator" class="divider"></li>
-                            <li><a href="{% url 'web:logout' %}">退出</a></li>
+                            <li><a href="{% url 'web:logout' %}"><i class="fa fa-sign-out"></i> 退出</a></li>
                         </ul>
                     </li>
                 </ul>
             {% else %}
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a href="{% url 'web:login' %}">登录</a></li>
-                    <li><a href="{% url 'web:register' %}">注册</a></li>
+                    <li><a href="{% url 'web:login' %}"><i class="fa fa-sign-in"></i> 登录</a></li>
+                    <li><a href="{% url 'web:register' %}"><i class="fa fa-user-plus"></i> 注册</a></li>
                 </ul>
             {% endif %}
-        </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
+        </div>
+    </div>
 </nav>
-
-<!-- alert框
-<div class="alert alert-warning alert-dismissible" role="alert" style="width: 250px; position: absolute">
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-  <strong>Warning!</strong> Better check yourself, you're not looking too good.
-</div>
--->
-
 
 {% block content %}{% endblock %}
 
+<script src="{% static 'plugins/web_socket/web_socket.js' %}"></script>
 <script>
-
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                // 判断cookie是不是想要的
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
@@ -191,75 +314,113 @@
         return cookieValue;
     }
 
-    // 判断那些请求header无需携带csrf
     function notNeedCsrf(method) {
         return (/^(GET|HEAD|OPTIONS|TRACE|)$/).test(method)
     }
 
-    // ajax请求的预处理, 携带csrf请求头
     $.ajaxSetup({
         beforeSend: function (xhr, settings) {
             if (!notNeedCsrf(settings.type)) {
                 xhr.setRequestHeader('X-CSRFTOKEN', getCookie('csrftoken'))
             }
         }
-    })
+    });
 
-    // 树状结构
-    // 计算当前元素深度（ul的嵌套层级），根ul为0，子ul为1，依次递增
-    function getULDepth(ul) {
-        let depth = 0;
-        let parent = ul.parentElement;
-        while (parent) {
-            if (parent.tagName.toLowerCase() === 'ul') depth++;
-            parent = parent.parentElement;
-        }
-        return depth;
-    }
+    // 下拉菜单动画增强
+    $(document).ready(function () {
+        $('.dropdown').hover(function () {
+            $(this).addClass('open');
+        }, function () {
+            $(this).removeClass('open');
+        });
+        init_websocket()
+    });
 
+    function bindTreeEvents($container) {
+        $container.find('li').each(function () {
+            const $li = $(this);
+            const $childUL = $li.children('ul');
+            const $label = $li.children('.label');
+            const $toggleIcon = $li.children('.toggle-icon');
 
-   function bindTreeEvents($container) {
-    $container.find('li').each(function () {
-        const $li = $(this);
-        const $childUL = $li.children('ul');
-        const $label = $li.children('.label');
-        const $toggleIcon = $li.children('.toggle-icon');
+            if ($childUL.length === 0) {
+                $li.addClass('no-children');
+                $label.on('click', function (e) {
+                    e.stopPropagation();
+                    $('.tree .selected').removeClass('selected');
+                    $li.addClass('selected');
+                    console.log('点击末节点：', $label.text().trim());
+                });
+                return;
+            }
 
-        if ($childUL.length === 0) {
-            $li.addClass('no-children');
+            $li.addClass('has-children');
+
+            // 默认全部展开
+            $childUL.removeClass('collapsed');
+            $li.addClass('expanded');
+
+            $toggleIcon.on('click', function (e) {
+                e.stopPropagation();
+                $childUL.toggleClass('collapsed');
+                $li.toggleClass('expanded');
+            });
+
             $label.on('click', function (e) {
                 e.stopPropagation();
                 $('.tree .selected').removeClass('selected');
                 $li.addClass('selected');
-                console.log('点击末节点：', $label.text().trim());
+                location.href = '?wid=' + $(this).parent().attr('id')
             });
-            return;
+        });
+    }
+
+    // 消息提醒图标
+    function updateIndicatorBadge() {
+        const badge = document.getElementById('indicator-badge');
+        if (badge) {
+            const count = messageQueue.length;
+            badge.textContent = count > 99 ? '99+' : count;
+
+            // 如果有新消息，添加红色背景和动画
+            if (count > 0) {
+                badge.style.background = '#ff4757';
+                badge.style.color = 'white';
+                badge.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => {
+                    badge.style.animation = '';
+                }, 1000);
+            } else {
+                // 没有消息时显示灰色
+                badge.style.background = '#6c757d';
+                badge.style.color = 'white';
+            }
         }
+    }
 
-        $li.addClass('has-children');
+    // 添加消息图标的点击事件
+    function setupMessageIndicator() {
+        const indicator = document.getElementById('message-indicator');
+        if (indicator) {
+            indicator.onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
 
-        // 默认全部展开
-        $childUL.removeClass('collapsed');
-        $li.addClass('expanded');
+                if (messageQueue.length > 0) {
+                    showNotifications(messageQueue);
+                } else {
+                    // 如果没有消息，可以显示提示或者不做任何操作
+                    console.log('暂无消息');
+                }
+            };
+        }
+    }
 
-        $toggleIcon.on('click', function (e) {
-            e.stopPropagation();
-            $childUL.toggleClass('collapsed');
-            $li.toggleClass('expanded');
-        });
-
-        $label.on('click', function (e) {
-            e.stopPropagation();
-            $('.tree .selected').removeClass('selected');
-            $li.addClass('selected');
-            location.href = '?wid='+$(this).parent().attr('id')
-        });
+    // 在页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function () {
+        setupMessageIndicator();
+        updateIndicatorBadge();
     });
-}
-
-
-
-
 </script>
 
 {% block js %}{% endblock %}

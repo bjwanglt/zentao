@@ -62,13 +62,13 @@ class Transaction(models.Model):
 class Project(models.Model):
     """项目"""
     COLOR_CHOICES = (
-        (1, '#56b8eb'),
-        (2, '#f28033'),
-        (3, '#ebc656'),
-        (4, '#a2d148'),
-        (5, '#20BFA4'),
-        (6, '#7461c2'),
-        (7, '#BE8C3EFF'),
+        (1, '#57514d'),
+        (2, '#6d5c5d'),
+        (3, '#515c6b'),
+        (4, '#6e8089'),
+        (5, '#718175'),
+        (6, '#5c495f'),
+        (7, '#494c5f'),
     )
 
     name = models.CharField(verbose_name='项目名称', max_length=32)

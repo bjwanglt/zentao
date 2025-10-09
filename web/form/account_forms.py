@@ -10,12 +10,12 @@ import re
 
 # 注册表单
 class register_form(BootstrapMixin, forms.Form):
-    username = forms.CharField(label='用户名', widget=forms.TextInput())
-    email = forms.CharField(label='邮箱', widget=forms.TextInput())
-    phone = forms.CharField(label='手机号码', widget=forms.TextInput())
-    phonecode = forms.CharField(label='验证码', widget=forms.TextInput())
-    password = forms.CharField(label='密码', widget=forms.PasswordInput(render_value=True), max_length=32, min_length=8)
-    confirm_password = forms.CharField(label='确认密码', widget=forms.PasswordInput(render_value=True))
+    username = forms.CharField(label='用户名', widget=forms.TextInput(attrs=dict(icon="fa fa-user-circle")))
+    email = forms.CharField(label='邮箱', widget=forms.TextInput(attrs=dict(icon="fa fa-envelope-open-o")))
+    phone = forms.CharField(label='手机号码', widget=forms.TextInput(attrs=dict(icon="fa fa-volume-control-phone")))
+    phonecode = forms.CharField(label='验证码', widget=forms.TextInput(attrs=dict(icon="fa fa-tty")))
+    password = forms.CharField(label='密码', widget=forms.PasswordInput(render_value=True, attrs=dict(icon="fa fa-sticky-note")), max_length=32, min_length=8)
+    confirm_password = forms.CharField(label='确认密码', widget=forms.PasswordInput(render_value=True,attrs=dict(icon="fa fa-sticky-note-o")))
 
     def clean_phone(self):
         phone_val = self.cleaned_data['phone']

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>消息通知</title>
+    <meta charset="utf-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .notification-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            background: #f8f9fa;
+        }
+
+        .message-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+        }
+
+        .message-row {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+
+        .message-row:hover {
+            background: #f8f9fa;
+        }
+
+        .message-cell {
+            padding: 16px;
+            color: #2d3748;
+            line-height: 1.5;
+            word-break: break-word;
+            font-size: 14px;
+        }
+
+        .button-cell {
+            padding: 16px;
+            text-align: right;
+            white-space: nowrap;
+            width: 100px;
+        }
+
+        .confirm-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .confirm-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .confirm-btn:active {
+            transform: translateY(0);
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #6c757d;
+            background: white;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: #dee2e6;
+            margin-bottom: 16px;
+        }
+
+        .empty-state .title {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .loading-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .connection-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .connected {
+            background: #28a745;
+        }
+
+        .disconnected {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<div class="notification-header">
+    <div class="header-left">
+        <i class="fa fa-bell"></i>
+        <div class="header-title">消息通知</div>
+        <div class="connection-indicator connected" id="connection-indicator"></div>
+    </div>
+    <button class="close-btn" id="close-iframe">&times;</button>
+</div>
+
+<div class="notification-content" id="message-content">
+    <div class="loading-state">
+        <i class="fa fa-spinner fa-spin"></i>
+        <div>加载中...</div>
+    </div>
+</div>
+
+<script>
+    class IframeNotificationHandler {
+        constructor() {
+            this.messages = [];
+            this.isConnected = false;
+            this.init();
+        }
+
+        init() {
+            this.setupEventListeners();
+            this.setupMessageHandler();
+            this.notifyParentReady();
+            this.requestHistory();
+        }
+
+        setupEventListeners() {
+            document.getElementById('close-iframe').addEventListener('click', () => {
+                this.closeIframe();
+            });
+        }
+
+        setupMessageHandler() {
+            window.addEventListener('message', (event) => {
+                const data = event.data;
+
+                switch (data.type) {
+                    case 'NEW_MESSAGES':
+                        this.handleNewMessages(data.messages);
+                        break;
+
+                    case 'PENDING_MESSAGES':
+                        console.log('收到暂存消息:', data.messages.length);
+                        this.handleNewMessages(data.messages);
+                        break;
+
+                    case 'HISTORY_MESSAGES':
+                        this.handleHistoryMessages(data.messages);
+                        break;
+                }
+            });
+        }
+
+        handleNewMessages(newMessages) {
+            this.messages = [...this.messages, ...newMessages];
+            this.displayMessages();
+            this.updateConnectionStatus(true);
+
+            // 通知父页面消息已接收
+            window.parent.postMessage({
+                type: 'MESSAGES_RECEIVED',
+                count: newMessages.length
+            }, '*');
+        }
+
+        handleHistoryMessages(historyMessages) {
+            this.messages = historyMessages;
+            this.displayMessages();
+        }
+
+        displayMessages() {
+            const content = document.getElementById('message-content');
+
+            if (this.messages.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa fa-bell-slash"></i>
+                        <div class="title">暂无消息</div>
+                        <div>所有消息都已处理完成</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let tableHTML = `
+                <table class="message-table">
+                    <tbody>
+            `;
+
+            this.messages.forEach((message, index) => {
+                const messageContent = Array.isArray(message) ? message[1] : message.content;
+                const messageId = Array.isArray(message) ? message[0] : message.id;
+                const timestamp = Array.isArray(message) ? (message[2] || Date.now()) : (message.timestamp || Date.now());
+
+                tableHTML += `
+                    <tr class="message-row" data-message-id="${messageId}">
+                        <td class="message-cell">
+                            <div style="margin-bottom: 8px;">${this.escapeHtml(messageContent)}</div>
+                            <div style="font-size: 12px; color: #6c757d;">
+                                ${new Date(timestamp).toLocaleString()}
+                            </div>
+                        </td>
+                        <td class="button-cell">
+                            <button class="confirm-btn" onclick="iframeHandler.confirmMessage('${messageId}')">
+                                确认
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            content.innerHTML = tableHTML;
+        }
+
+        confirmMessage(messageId) {
+            console.log('确认消息:', messageId);
+
+            // 从显示中移除
+            const messageRow = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (messageRow) {
+                messageRow.style.opacity = '0.5';
+                messageRow.querySelector('.confirm-btn').textContent = '已确认';
+                messageRow.querySelector('.confirm-btn').disabled = true;
+                messageRow.querySelector('.confirm-btn').style.background = '#6c757d';
+
+                // 3秒后移除
+                setTimeout(() => {
+                    messageRow.remove();
+                    // 从内存中移除
+                    this.messages = this.messages.filter(msg => {
+                        const id = Array.isArray(msg) ? msg[0] : msg.id;
+                        return id !== messageId;
+                    });
+
+                    // 如果所有消息都处理完了，显示空状态
+                    if (this.messages.length === 0) {
+                        this.displayMessages();
+                    }
+                }, 1000);
+            }
+
+            // 通知父页面消息已确认
+            window.parent.postMessage({
+                type: 'MESSAGE_CONFIRMED',
+                messageId: messageId
+            }, '*');
+
+            // TODO: 发送确认请求到服务器
+            this.sendConfirmationToServer(messageId);
+        }
+
+        sendConfirmationToServer(messageId) {
+            // 实现确认消息的AJAX请求
+            fetch('/api/confirm-message/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({message_id: messageId})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('消息确认成功:', data);
+                })
+                .catch(error => {
+                    console.error('消息确认失败:', error);
+                });
+        }
+
+        closeIframe() {
+            window.parent.postMessage({
+                type: 'IFRAME_CLOSED'
+            }, '*');
+        }
+
+        notifyParentReady() {
+            window.parent.postMessage({
+                type: 'NOTIFICATION_READY'
+            }, '*');
+        }
+
+        requestHistory() {
+            window.parent.postMessage({
+                type: 'REQUEST_HISTORY'
+            }, '*');
+        }
+
+        updateConnectionStatus(connected) {
+            this.isConnected = connected;
+            const indicator = document.getElementById('connection-indicator');
+            if (indicator) {
+                indicator.className = `connection-indicator ${connected ? 'connected' : 'disconnected'}`;
+            }
+        }
+
+        getCSRFToken() {
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            return cookieValue || '';
+        }
+
+        escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    }
+
+    // 全局实例
+    const iframeHandler = new IframeNotificationHandler();
+</script>
+</body>
+</html>
