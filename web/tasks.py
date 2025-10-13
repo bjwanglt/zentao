@@ -27,4 +27,5 @@ def send_report(self: Task, email_list, project_id):
         from_email='2597843280@qq.com',
         to=email_list
     )
+    email.send()
     print(f'>>>>>>>>>>  发送成功 {email_list=}  {project_id=}<<<<<<<<<<<<')
