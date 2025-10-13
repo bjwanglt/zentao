@@ -24,7 +24,7 @@ def to_login(request):
 
 
 urlpatterns = [
-    # path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
 
     # 测试用  可忽略
     path('test/', include(('testapp.urls', 'test'), )),

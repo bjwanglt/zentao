@@ -1,0 +1,177 @@
+/* 确认对话框基础样式 */
+.confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.confirm-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirm-dialog {
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.confirm-overlay.active .confirm-dialog {
+    transform: translateY(0);
+}
+
+.confirm-header {
+    padding: 20px 24px 0;
+    text-align: center;
+}
+
+.confirm-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.confirm-icon.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.confirm-icon.success {
+    background: #d1edff;
+    color: #0d6efd;
+}
+
+.confirm-icon.danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.confirm-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.confirm-message {
+    padding: 20px 24px;
+    text-align: center;
+    color: #666;
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+.confirm-footer {
+    padding: 0 24px 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* 按钮基础样式 */
+.confirm-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.confirm-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* 取消按钮样式 */
+.confirm-btn-cancel {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.confirm-btn-cancel:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+/* 确认按钮样式 */
+.confirm-btn-confirm {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.confirm-btn-confirm:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.confirm-btn-confirm:active {
+    transform: translateY(0);
+}
+
+/* 危险操作确认按钮 */
+.confirm-btn-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.confirm-btn-danger:hover {
+    background: linear-gradient(135deg, #c82333, #a71e2a);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* 成功操作确认按钮 */
+.confirm-btn-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.confirm-btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34, #155724);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.confirm-dialog {
+    animation: slideIn 0.3s ease;
+}

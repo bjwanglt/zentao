@@ -16,7 +16,7 @@ class check_session(MiddlewareMixin):
 
     def process_request(self, request: HttpRequest):
         # 放行无需校验session的请求
-        if request.path_info in settings.NO_SESSION_CHECK_URLS:
+        if request.path_info in settings.NO_SESSION_CHECK_URLS or request.path_info.find('/admin/') != -1:
             return
             # 修复场景：用户表删除记录后，被删除用户携带cookie再次发起请求，还可以操作
         userinfo = request.session.get('userinfo')

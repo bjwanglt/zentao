@@ -15,4 +15,5 @@ class BootstrapMixin:
                 continue
             class_val = field.widget.attrs.get('class', '')
             field.widget.attrs['class'] = (class_val + ' form-control').strip()
-            field.widget.attrs['placeholder'] = '请输入' + (field.label or '')
+            if 'placeholder' not in field.widget.attrs:
+                field.widget.attrs['placeholder'] = '请输入' + (field.label or '')

@@ -1,0 +1,840 @@
+{% extends 'layout/basic_mange.html' %}
+{% load static %}
+{% load ai_tags %}
+{% load page_info %}
+{% load job %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/ai/ai.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+    <style>
+        .issues-list .number {
+            width: 100px;
+            text-align: right;
+        }
+
+        .issues-list .number a {
+            font-weight: 500;
+            padding: 0 10px;
+        }
+
+        .issues-list .issue .tags {
+            padding: 10px 0;
+        }
+
+        .issues-list .issue .tags span {
+            margin-right: 20px;
+            display: inline-block;
+            font-size: 12px;
+        }
+
+        .issues-list .issue .tags .type {
+            color: white;
+            padding: 1px 5px;
+            border-radius: 5px;
+            background-color: #3d82c7;
+        }
+
+        .editormd {
+            margin-bottom: 0;
+        }
+
+        .pd-0 {
+            padding: 0 !important;
+        }
+
+        /* 筛选 */
+        .filter-area .item {
+            margin-bottom: 15px;
+        }
+
+        .filter-area .item .title {
+            padding: 5px 0;
+        }
+
+        .filter-area .item .check-list a {
+            text-decoration: none;
+            display: inline-block;
+            min-width: 65px;
+        }
+
+        .filter-area .item .check-list label {
+            font-weight: 200;
+            font-size: 13px;
+            margin-left: 3px;
+        }
+
+        .filter-area .item .check-list a:hover {
+            font-weight: 300;
+        }
+
+        .filter-area .item .check-list .cell {
+            margin-right: 10px;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: #d9534f;
+        }
+
+        /* 分页样式 - 调整到左边，无边框 */
+        .pagination-container {
+            padding: 15px 0;
+            text-align: left;
+            background: none;
+            border: none;
+        }
+
+        .panel-body + .pagination-container {
+            margin-top: 0;
+        }
+
+        /* 表格美化样式 */
+        .table-container {
+            margin-bottom: 0;
+        }
+
+        .table-custom {
+            margin-bottom: 0;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .table-custom thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            padding: 12px 15px;
+        }
+
+        .table-custom tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-custom tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 任务名称可点击样式 */
+        .task-name-clickable {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .task-name-clickable:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        /* 操作列样式 */
+        .table-actions {
+            width: 150px;
+            text-align: center;
+        }
+
+        .table-actions .btn {
+            margin: 0 3px;
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+
+        /* 面板样式调整 */
+        .panel-body {
+            padding-bottom: 10px;
+        }
+
+        /* 筛选框样式 */
+        .filter-area {
+            padding: 15px;
+        }
+
+        /* 右下角按钮样式 */
+        .text-right .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+
+        /* 详情模态框表格样式 */
+        .detail-table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .detail-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            width: 30%;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .detail-table td {
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        /* 数据表格样式 */
+        .data-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        /* 弹窗分页样式 */
+        .modal-pagination-container {
+            padding: 10px 0;
+            text-align: center;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-pagination {
+            margin: 0;
+        }
+
+        .modal-pagination .pagination {
+            margin: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid clearfix" style="padding: 20px 0;">
+        <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-search" aria-hidden="true"></i> 筛选
+                </div>
+                <div class="panel-body filter-area">
+                    <form id="filter_form">
+                        <!-- 输入框 -->
+                        <div class="form-group">
+                            <label for="filterInput">任务名称:</label>
+                            <input name='name' type="text" class="form-control" id="filterName"
+                                   placeholder="请输入任务名称">
+                        </div>
+                    </form>
+                    <!-- 右下角的查询按钮 -->
+                    <div class="text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="filterBtn">
+                            <i class="fa fa-search" aria-hidden="true"></i> 查询
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-9">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-quora" aria-hidden="true"></i> 任务
+                </div>
+                <div class="panel-body">
+                    <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addModal">
+                        <i class="fa fa-plus"></i> 新建任务
+                    </a>
+                </div>
+
+                <!-- 问题列表容器 -->
+                <div id="issues-container" class="table-container">
+                </div>
+            </div>
+            <!-- 分页导航容器 -->
+            <div class="pagination-container" id="pagination-container"></div>
+        </div>
+    </div>
+
+    <!-- 新建问题模态框 -->
+    <div id="addModal" class="modal fade" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">新建任务</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addForm" class="form-horizontal">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}"
+                                   class="col-md-3 control-label">{{ form.name.label }}</label>
+                            <div class="col-md-9">
+                                <div>
+                                    {{ form.name }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.task.id_for_label }}"
+                                   class="col-md-3 control-label">{{ form.task.label }}</label>
+                            <div class="col-md-9">
+                                <div>
+                                    {{ form.task }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.project_id.id_for_label }}"
+                                   class="col-md-3 control-label">{{ form.project_id.label }}</label>
+                            <div class="col-md-9">
+                                <div>
+                                    {{ form.project_id }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.args.id_for_label }}"
+                                   class="col-md-3 control-label">{{ form.args.label }}</label>
+                            <div class="col-md-9">
+                                <div>
+                                    {{ form.args }}
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">执行时间</label>
+                            <div class="col-md-9">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.scheduler_hour }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.scheduler_minute }}
+                                    </div>
+                                </div>
+                                <div class="error-msg" id="scheduler_hour"></div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                    <button type="button" class="btn btn-primary" id="btnAddSubmit">添 加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务详情模态框 -->
+    <div id="detailModal" class="modal fade" tabindex="-1" role="dialog"
+         aria-labelledby="detailModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">执行数据</h4>
+                </div>
+                <div class="modal-body">
+                    <!-- 基本信息表格 -->
+                    <!--
+                    <div class="basic-info">
+                        <h5>基本信息</h5>
+                        <table class="table table-bordered detail-table">
+                            <tbody>
+                            <tr>
+                                <th>任务名称</th>
+                                <td id="detail-name">-</td>
+                            </tr>
+                            <tr>
+                                <th>任务类型</th>
+                                <td id="detail-task">-</td>
+                            </tr>
+                            <tr>
+                                <th>项目ID</th>
+                                <td id="detail-project">-</td>
+                            </tr>
+                            <tr>
+                                <th>接收邮箱</th>
+                                <td id="detail-args">-</td>
+                            </tr>
+                            <tr>
+                                <th>执行时间</th>
+                                <td id="detail-schedule">-</td>
+                            </tr>
+                            <tr>
+                                <th>状态</th>
+                                <td id="detail-status">-</td>
+                            </tr>
+                            <tr>
+                                <th>创建时间</th>
+                                <td id="detail-created">-</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    -->
+
+                    <!-- 数据表格 -->
+                    <div class="data-section">
+                        <div class="data-table-container">
+                            <table class="table table-striped table-bordered" id="data-table">
+                                <thead>
+                                <tr>
+                                    <th>Task Id</th>
+                                    <th>结果</th>
+                                    <th>开始时间</th>
+                                    <th>结束时间</th>
+                                    <th>执行参数</th>
+                                    <th>失败重试</th>
+                                </tr>
+                                </thead>
+                                <tbody id="data-table-body">
+                                <!-- 数据将通过AJAX动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- 弹窗分页容器 -->
+                        <div class="modal-pagination-container" id="modal-pagination-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugins/ai/ai.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/editormd.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+    <script src="{% static 'plugins/select2/js/select2.min.js' %}"></script>
+    <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
+
+    <script>
+        let currentPage = 1;
+        let currentTaskName = null;
+        let currentDetailPage = 1;
+
+        $(function () {
+            loadIssues();
+            bindBootStrapShownEvent();
+            bindAddSubmit();
+            bindClickCheckFilter();
+            initSelect2()
+        });
+
+        $('#filterBtn').click(function () {
+            loadIssues(1);
+        })
+
+        // 加载问题列表
+        function loadIssues(page = 1) {
+            currentPage = page;
+            $('#pagination-container').empty();
+
+            $.ajax({
+                url: '{% url 'web:schedule_job' %}',
+                type: 'GET',
+                data: {
+                    page: page,
+                    name: $('#filterName').val()
+                },
+                success: function (res) {
+                    if (res.status) {
+                        renderIssues(res.errors_or_data.datas);
+                        renderPagination(res.errors_or_data.pagination);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    $('#issues-container').html('<div class="error-message">网络错误，请重试</div>');
+                }
+            });
+        }
+
+        // 渲染问题列表 - 使用美化后的表格样式
+        function renderIssues(issues) {
+            if (!issues || issues.length === 0) {
+                $('#issues-container').html('<div class="loading">暂无数据</div>');
+                return;
+            }
+
+            let html = `
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%">任务名称</th>
+                            <th style="width: 18%">接收邮箱</th>
+                            <th style="width: 18%">执行时间</th>
+                            <th style="width: 18%">是否启用</th>
+                            <th class="table-actions">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            issues.forEach(function (item) {
+                html += `
+                    <tr>
+                        <td>
+                            <div class="task-name-clickable" onclick="showTaskDetail('${item.name}')" title="点击查看详情">
+                                <i class="fa fa-info-circle"></i> ${item.name}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500; color: #333;">${item.args}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500; color: #333;">
+                                ${item.interval__every ? `每 ${item.interval__every} ${item.interval__period}` : `每天 ${item.crontab__hour}:${item.crontab__minute}`}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500; color: #333;">
+                                ${item.enabled ? `<i class="fa fa-toggle-on" style="color: #28a745;"></i> 启用` : `<i class="fa fa-toggle-off" style="color: #dc3545;"></i> 禁用`}
+                            </div>
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-primary btn-xs" onclick="editIssue(${item.id})" title="修改">
+                                <i class="fa fa-edit"></i> 修改
+                            </button>
+                            <button class="btn btn-danger btn-xs" onclick="deleteIssue(${item.id})" title="删除">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                            <button class="btn btn-success btn-xs" onclick="operate_enable(${item.id}, true)" title="启用">
+                                <i class="fa fa-check"></i> 启用
+                            </button>
+                            <button class="btn btn-warning btn-xs" onclick="operate_enable(${item.id}, false)" title="禁用">
+                                <i class="fa fa-times"></i> 禁用
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            $('#issues-container').html(html);
+        }
+
+        // 渲染分页
+        function renderPagination(pagination) {
+            if (!pagination || pagination.total_pages <= 1) {
+                $('#pagination-container').html('');
+                return;
+            }
+
+            let html = '<ul class="pagination" style="margin: 0;">';
+
+            // 首页
+            html += `<li><a href="javascript:void(0)" onclick="loadIssues(1)">首页</a></li>`;
+
+            // 上一页
+            if (pagination.has_previous) {
+                html += `<li><a href="javascript:void(0)" onclick="loadIssues(${pagination.previous_page})">上一页</a></li>`;
+            } else {
+                html += `<li class="disabled"><a href="javascript:void(0)">上一页</a></li>`;
+            }
+
+            // 页码
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                if (i === currentPage) {
+                    html += `<li class="active"><a href="javascript:void(0)">${i}</a></li>`;
+                } else {
+                    html += `<li><a href="javascript:void(0)" onclick="loadIssues(${i})">${i}</a></li>`;
+                }
+            }
+
+            // 下一页
+            if (pagination.has_next) {
+                html += `<li><a href="javascript:void(0)" onclick="loadIssues(${pagination.next_page})">下一页</a></li>`;
+            } else {
+                html += `<li class="disabled"><a href="javascript:void(0)">下一页</a></li>`;
+            }
+
+            // 尾页
+            html += `<li><a href="javascript:void(0)" onclick="loadIssues(${pagination.total_pages})">尾页</a></li>`;
+
+            html += '</ul>';
+            $('#pagination-container').html(html);
+        }
+
+        // 显示任务详情
+        function showTaskDetail(taskName, page = 1) {
+            currentDetailPage = page;
+            currentTaskName = taskName
+
+            // 显示加载状态
+            $('#data-table-body').html('<tr><td colspan="5" class="text-center">加载中...</td></tr>');
+            $('#modal-pagination-container').empty();
+
+            // 模拟AJAX请求获取任务详情
+            // 在实际应用中，这里应该调用真实的API接口
+            $.ajax({
+                url: '{% url "web:schedule_job_result" %}', // 预留的API接口地址
+                type: 'GET',
+                data: {
+                    page: page,
+                    periodic_task_name: taskName
+                },
+                success: function (res) {
+                    if (res.status) {
+                        fillTaskDetail(res.errors_or_data);
+                    } else {
+                    }
+                },
+                error: function () {
+                }
+            });
+
+            $('#detailModal').modal('show');
+        }
+
+        // 渲染任务执行数据
+        function fillTaskDetail(realData) {
+            // 填充基本信息
+            /*
+                $('#detail-name').text(realData.name || '-');
+                $('#detail-task').text(realData.task || '-');
+                $('#detail-project').text(realData.project_id || '-');
+                $('#detail-args').text(realData.args || '-');
+                $('#detail-schedule').text(realData.schedule || '-');
+                $('#detail-status').text(realData.enabled ? '启用' : '禁用');
+                $('#detail-created').text(realData.created_at || '-');
+            */
+
+            // 渲染执行数据和分页
+            renderExecutionData(realData || []);
+            if (realData.pagination) {
+                renderModalPagination(realData.pagination);
+            }
+        }
+
+        // 渲染执行数据表格
+        function renderExecutionData(data) {
+            let html = '';
+            if (data.length === 0) {
+                html = '<tr><td colspan="5" class="text-center">暂无执行数据</td></tr>';
+            } else {
+                data.datas.forEach(function (item) {
+                    const statusClass = item.status === 'SUCCESS' ? 'success' :
+                        item.status === 'FAILURE' ? 'danger' : 'warning';
+                    html += `
+                        <tr>
+                            <td>${item.task_id}</td>
+                            <td><span class="label label-${statusClass}">${item.status || '未知'}</span></td>
+                            <td>${item.date_created}</td>
+                            <td>${item.date_done}</td>
+                            <td>${item.task_args}</td>
+                            <td>
+                                ${item.status === 'SUCCESS' ? '/' : `
+                                    <button onclick="retry_task('${item.task_id}','${item.task_name}')" type="button" class="btn btn-primary btn-sm">重试</button>
+                                `}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            $('#data-table-body').html(html);
+        }
+
+
+        // 失败任务重试
+        function retry_task(task_id, task_name) {
+            $.ajax({
+                url: '{% url "web:schedule_job_retry" %}',
+                type: 'POST',
+                data: {
+                    task_id: task_id,
+                    task_name: task_name,
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    if(res.status){
+                        showSuccess('请稍后查看')
+                    }else{
+                        showWarning(res.errors_or_data)
+                    }
+                }
+            })
+        }
+
+        // 渲染弹窗分页
+        function renderModalPagination(pagination) {
+            if (!pagination || pagination.total_pages <= 1) {
+                $('#modal-pagination-container').html('');
+                return;
+            }
+
+            let html = '<ul class="pagination modal-pagination" style="margin: 0;">';
+
+            // 首页
+            html += `<li><a href="javascript:void(0)" onclick="showTaskDetail('${currentTaskName}', 1)">首页</a></li>`;
+
+            // 上一页
+            if (pagination.has_previous) {
+                html += `<li><a href="javascript:void(0)" onclick="showTaskDetail('${currentTaskName}', ${pagination.previous_page})">上一页</a></li>`;
+            } else {
+                html += `<li class="disabled"><a href="javascript:void(0)">上一页</a></li>`;
+            }
+
+            // 页码
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                if (i === currentDetailPage) {
+                    html += `<li class="active"><a href="javascript:void(0)">${i}</a></li>`;
+                } else {
+                    html += `<li><a href="javascript:void(0)" onclick="showTaskDetail('${currentTaskName}', ${i})">${i}</a></li>`;
+                }
+            }
+
+            // 下一页
+            if (pagination.has_next) {
+                html += `<li><a href="javascript:void(0)" onclick="showTaskDetail('${currentTaskName}', ${pagination.next_page})">下一页</a></li>`;
+            } else {
+                html += `<li class="disabled"><a href="javascript:void(0)">下一页</a></li>`;
+            }
+
+            // 尾页
+            html += `<li><a href="javascript:void(0)" onclick="showTaskDetail('${currentTaskName}', ${pagination.total_pages})">尾页</a></li>`;
+
+            html += '</ul>';
+            $('#modal-pagination-container').html(html);
+        }
+
+        // 修改问题
+        function editIssue(id) {
+            console.log('修改问题:', id);
+            // 这里添加修改逻辑
+        }
+
+        // 删除单个问题
+        function deleteIssue(id) {
+            const result = showConfirm({
+                title: '确认删除',
+                message: '确定要删除这个任务吗？',
+                confirmText: '删除',
+                cancelText: '取消',
+                type: 'danger'
+            }).then(result => {
+                if (result) {
+                    $.ajax({
+                        url: "{% url 'web:schedule_job' %}",
+                        type: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({id: id}),
+                        success: function (res) {
+                            if (res.status) {
+                                showSuccess()
+                                loadIssues(currentPage);
+                            } else {
+                                showError(res.errors_or_data)
+                            }
+                        }
+                    })
+                }
+            });
+        }
+
+        // 绑定新增提交事件
+        function bindAddSubmit() {
+            $('#btnAddSubmit').click(function () {
+                $("#addForm").find('.error-msg').empty();
+                $.ajax({
+                    url: "{% url 'web:schedule_job' %}",
+                    type: "POST",
+                    data: $('#addForm').serialize(),
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            showSuccess()
+                            $('#addModal').modal('hide');
+                            loadIssues(currentPage);
+                            $('#addForm')[0].reset();
+                        } else {
+                            $.each(res.errors_or_data, function (k, v) {
+                                console.log(k, v)
+                                $('#id_' + k).next('.error-msg').text(v[0]);
+                            })
+                        }
+                    },
+                    error: function () {
+                        alert('网络错误，请重试');
+                    }
+                });
+            });
+        }
+
+        // 模态框显示事件
+        function bindBootStrapShownEvent() {
+            $('#addModal').on('shown.bs.modal', function () {
+                $("#addForm").find('.error-msg').empty();
+            });
+        }
+
+        // 筛选条件点击事件
+        function bindClickCheckFilter() {
+            $('.filter-area').find(':checkbox').click(function () {
+                loadIssues(1);
+            });
+        }
+
+        function initSelect2() {
+            $('.select2').select2({}).on('select2:select', function (e) {
+                location.href = e.params.data.id;
+            }).on('select2:unselect', function (e) {
+                location.href = e.params.data.id;
+            });
+        }
+
+        // 启用 / 禁用
+        function operate_enable(id, flag) {
+            const result = showConfirm({
+                title: '确认',
+                message: ('确认' + (flag ? '启用' : '禁用') + '吗？'),
+                confirmText: '确认',
+                cancelText: '取消',
+                type: flag ? 'success' : 'warning'
+            }).then(result => {
+                if (result) {
+                    $.ajax({
+                        url: "{% url 'web:schedule_job' %}",
+                        type: 'PATCH',
+                        data: {
+                            'id': id,
+                            'enabled': flag
+                        },
+                        success: function (res) {
+                            if (res.status) {
+                                showSuccess()
+                                loadIssues(currentPage);
+                            } else {
+                                showError(res.errors_or_data)
+                            }
+                        }
+                    })
+                }
+            });
+        }
+    </script>
+{% endblock %}

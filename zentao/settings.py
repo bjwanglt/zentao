@@ -30,14 +30,19 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    # 'django.contrib.admin',
-    # 'django.contrib.auth',
+    'simpleui',
+    'django.contrib.admin',
+    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    # 'django.contrib.messages',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 处理websocket
     'channels',
-
+    # celery定时任务
+    'django_celery_results',
+    'django_celery_beat',
+    # 自定义
     'web.apps.WebConfig',
     'testapp.apps.TestappConfig'
 ]
@@ -47,8 +52,8 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'middlewares.check_session.check_session'
 ]
@@ -65,7 +70,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',  # 返回的结果会更新到render的字典里
                 'django.template.context_processors.request',
-                # 'django.contrib.auth.context_processors.auth',
+                'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -105,20 +110,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-
-USE_I18N = True
-
-USE_L10N = True
-
 LANGUAGE_CODE = 'zh-hans'
-
-#
 TIME_ZONE = 'Asia/Shanghai'
+
+USE_TZ = False
+USE_I18N = True
+USE_L10N = True
 
 # 影响自动生成数据库时间字段
 # USE_TZ = True   创建UTC时间写入到数据库
 # USE_TZ = False  根据TIME_ZONE设置的时区进行创建时间并写入数据库
-USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
@@ -146,6 +147,7 @@ NO_SESSION_CHECK_URLS = [
     '/account/send/sms/',
     '/account/index/',
     '/account/get_random_username/',
+    '/admin/'
 ]
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
@@ -171,10 +173,56 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': ['redis://127.0.0.1:6379/6',]
+            'hosts': ['redis://127.0.0.1:6379/6', ]
         }
     }
 }
+
+# 邮箱配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+
+EMAIL_HOST_USER = '2597843280@qq.com'
+EMAIL_HOST_PASSWORD = 'ravspywscpefecdj'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# simpleui 配置
+SIMPLEUI_HOME_INFO = False  # 关闭首页右侧广告
+SIMPLEUI_ANALYSIS = False  # 关闭simpleui内置的使用分析
+
+# # ceelry 配置 # #
+# Celery配置
+# # Broker配置,使用Redis作为消息中间件
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/7'
+# # BACKEND配置,使用redis
+# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/8'
+CELERY_RESULT_BACKEND = 'django-db'  # 使用数据库作为结果存储
+# # 结果序列化方案
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# # 任务结果过期时间,秒
+CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
+# # celery 时区配置
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_ENABLE_UTC = False  # True：Celery 使用 UTC 时间  False：Celery使用本地时间，周期任务调度基于本地时区计算
+CELERY_RESULT_EXTENDED = True
+CELERY_TASK_IGNORE_RESULT = False
+# # eager模式配置
+# CELERY_TASK_ALWAYS_EAGER = True  # Celery 在调用任务时，不再将任务发送到消息队列（broker），而是直接在本地、同步执行
+# CELERY_TASK_EAGER_PROPAGATES = True  # 控制任务在 eager 模式下 出现异常时的行为 False（默认）：任务出错时，异常会被捕获并存储在结果对象中，不会直接抛出。 True：任务一旦出错，异常会立即向上传播（抛出），就像普通函数调用一样。
+
+# CELERY_ACKS_LATE = True  # 不提前确认任务完成，只有在任务成功执行后才确认。
+# CELERY_TASK_TIME_LIMIT = 3
+DJANGO_CELERY_BEAT_TZ_AWARE = False
+
+# celery-beat配置
+# CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+
+CELERY_TASK_SOFT_TIME_LIMIT = 10
 
 try:
     from .local_settings import *

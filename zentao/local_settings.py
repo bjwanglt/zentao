@@ -1,9 +1,5 @@
 LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'Asia/Shanghai'
-
-USE_TZ = False
-
 # mysql配置
 DATABASES = {
     'default': {
