@@ -23,6 +23,10 @@ from web.form.account_forms import login_form
 from io import BytesIO
 from web.signals import user_register_sl
 
+import logging
+
+logger = logging.getLogger('django')
+
 
 def register(request: HttpRequest):
     method = request.method
@@ -57,7 +61,7 @@ def register(request: HttpRequest):
                 res.status = True
                 res.errors_or_data = reverse('web:login')
         except Exception as e:
-            print(e)
+            logger.error(e)
             res.errors_or_data = dict(confirm_password='系统繁忙, 请稍后重试')
         finally:
             return JsonResponse(res.get_dict())
