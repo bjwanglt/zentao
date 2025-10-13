@@ -222,7 +222,7 @@ DJANGO_CELERY_BEAT_TZ_AWARE = False
 # CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
-CELERY_TASK_SOFT_TIME_LIMIT = 10
+# CELERY_TASK_SOFT_TIME_LIMIT = 10
 
 
 # 日志配置，使用python内置的logging
