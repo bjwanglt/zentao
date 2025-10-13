@@ -3,7 +3,7 @@ let messageQueue = [];
 let isNotificationOpen = false;
 
 function init_websocket() {
-    const socket = new WebSocket(`ws://${window.location.host}:8000/ws/aaa/`)
+    const socket = new WebSocket(`ws://${window.location.host}/ws/aaa/`)
     window.websocket = socket
     // 消息总数提醒
     setupMessageIndicator();
