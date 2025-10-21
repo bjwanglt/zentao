@@ -23,7 +23,11 @@ class OpeCacheUserInfo:
     def get_user_info(self, user_id):
         user_info_bytedict = self.redis_conn.hgetall(f'{self.PREFIX}{str(user_id)}')
         if user_info_bytedict:
-            return {k.decode('utf-8'): int(v.decode('utf-8')) for k, v in user_info_bytedict.items()}
+            return {
+                k.decode('utf-8'): (
+                    int(v.decode('utf-8')) if k != b'username' else v.decode('utf-8')
+                )
+                for k, v in user_info_bytedict.items()}
 
     def get_user_projectnum(self, user_id):
         user_info = self.get_user_info(user_id)
