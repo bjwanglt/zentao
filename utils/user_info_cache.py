@@ -19,7 +19,7 @@ def user_info_cache(user_id=None):
             	user_info uu
             left join price_policy pp on
             	uu.price_policy_id = pp.id
-            ''' + (f' where uu.id = {user_id}' if user_id else '')
+            ''' + (f' where uu.id = {str(user_id)}' if user_id else '')
     from web import models
     objs = models.UserInfo.objects.raw(raw_sql)
 
