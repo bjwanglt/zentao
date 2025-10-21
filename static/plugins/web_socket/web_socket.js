@@ -295,7 +295,8 @@ function updateNotificationContent() {
                 `;
         // 假设 message 是 [id, content] 格式
         const messageContent = Array.isArray(message) ? message[1] : message;
-        messageCell.textContent = messageContent;
+        // messageCell.textContent = messageContent;
+        messageCell.innerHTML = messageContent;
 
         // 按钮单元格
         const buttonCell = document.createElement('td');
@@ -344,6 +345,54 @@ function updateNotificationContent() {
     });
 
     content.appendChild(table);
+
+    const links = content.querySelectorAll('a');
+    links.forEach(link => {
+        const originalOnclick = link.onclick;
+
+        link.onclick = function (e) {
+            // 执行确认操作
+            performConfirmAction(this)
+
+            // 允许正常跳转
+            return true;
+        };
+    });
+
+    function performConfirmAction(clickedLink) {
+        console.log('用户通过点击链接确认操作');
+
+        // 找到点击的链接所在的表格行
+        const tableRow = clickedLink.closest('tr');
+        if (!tableRow) return;
+
+        // 找到这个行在表格中的索引
+        const table = tableRow.closest('table');
+        const rowIndex = Array.from(table.rows).indexOf(tableRow);
+
+        // 根据行索引找到对应的消息
+        const displayMessages = messageQueue.slice(0, 3);
+        if (rowIndex >= 0 && rowIndex < displayMessages.length) {
+            const message = displayMessages[rowIndex];
+            const messageId = Array.isArray(message) ? message[0] : rowIndex;
+            const messageContent = Array.isArray(message) ? message[1] : message;
+
+            console.log('找到对应消息:', messageId, messageContent);
+
+            // 复用现有的确认逻辑
+            // 从队列中移除
+            removeMessageFromQueue(messageId);
+
+            // 发送已读消息
+            if (window.websocket && window.websocket.readyState === WebSocket.OPEN) {
+                window.websocket.send(messageId);
+                console.log('已发送已读消息:', messageId);
+            }
+
+            // 更新徽章
+            updateIndicatorBadge();
+        }
+    }
 
     // 更新UI元素
     if (badge) {
@@ -395,3 +444,4 @@ function closeNotification() {
     // messageQueue = [];
     // updateIndicatorBadge(); // 更新徽章显示
 }
+

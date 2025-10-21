@@ -5,8 +5,12 @@
     <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
-    <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css"/>
     <style>
+
+        .editormd-preview-container img {
+            cursor: zoom-in;
+        }
 
         .a_replay {
             cursor: pointer;
@@ -81,7 +85,74 @@
             margin-left: 5px;
         }
 
-    </style>
+        /* 强制按钮靠右 */
+        .btn-right-align {
+            position: absolute !important;
+            right: 15px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 10 !important;
+        }
+
+        /* 面板标题确保有足够空间 */
+        .panel-heading.edit-heading {
+            position: relative !important;
+            padding-right: 120px !important; /* 为按钮留出空间 */
+            min-height: 40px !important;
+        }
+
+        /* 按钮基础样式 */
+        .btn-edit, .btn-fixed {
+            padding: 6px 14px !important;
+            border: none !important;
+            border-radius: 4px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            line-height: 1.2 !important;
+            height: 32px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 60px !important;
+            margin: 0 !important;
+        }
+
+        /* 修改按钮样式 */
+        .btn-edit {
+            background-color: #3379b6 !important;
+            color: white !important;
+        }
+
+        .btn-edit:hover {
+            background-color: #2a6599 !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
+        }
+
+        /* 已修复按钮样式 */
+        .btn-fixed {
+            background-color: #48c054 !important;
+            color: white !important;
+        }
+
+        .btn-fixed:hover {
+            background-color: #3da848 !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
+        }
+
+        /* 按钮激活状态 */
+        .btn-edit:active, .btn-fixed:active {
+            transform: translateY(1px) !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+        }
+
+
+
+</style>
 {% endblock %}
 
 {% block content %}
@@ -92,7 +163,15 @@
                 <div class="panel-heading edit-heading">
                     <div>
                         <i class="fa fa-edit" aria-hidden="true"></i> 更新问题
-                        <button onclick="editData()" class="pull-right" style="background-color: #3379b6; color: white; border: black 1px solid">修改</button>
+
+                        <div class="btn-right-align">
+                            {% if is_creater %}
+                                <button onclick="editData()" class="btn-edit"><i class="fa fa-edit"></i>&nbsp;修改</button>
+                                <button onclick="editData('hasResolved')" class="btn-fixed"><i class="fa fa-check"></i>&nbsp;已解决</button>
+                            {% else %}
+                                <button onclick="editData('hasFixed')" class="btn-fixed"><i class="fa fa-wrench"></i>&nbsp;已修复</button>
+                            {% endif %}
+                        </div>
                     </div>
 
                 </div>
@@ -112,19 +191,50 @@
                                 <div class="error-msg"></div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="{{ form.module.id_for_label }}"
-                                   class="col-md-2 control-label">{{ form.module.label }}</label>
-                            <div class="col-md-10">
-                                <div>
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="{{ form.version.id_for_label }}" class="col-md-4 control-label">项目版本</label>
+                                <div class="col-md-8">
                                     <div>
-                                        {{ form.module }}
+                                        {{ form.version }}
                                     </div>
                                     <div class="error-msg"></div>
                                 </div>
-                                <div class="error-msg"></div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="{{ form.demand.id_for_label }}" class="col-md-4 control-label">需求</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.demand }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
                             </div>
                         </div>
+
+
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">指派</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.assign }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 pd-0">
+                                <label for="{{ form.priority.id_for_label }}" class="col-md-4 control-label">优先级</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.priority }}
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="{{ form.desc.id_for_label }}"
                                    class="col-md-2 control-label">{{ form.desc.label }}</label>
@@ -133,7 +243,6 @@
                                     <div id="editor">
                                         {{ form.desc }}
                                     </div>
-
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="error-msg"></div>
@@ -141,44 +250,12 @@
                         </div>
 
                         <div class="form-group clearfix">
-
                             <div class="col-md-6 pd-0">
-                                <label for="{{ form.status.id_for_label }}"
-                                       class="col-md-4 control-label">{{ form.status.label }}</label>
-                                <div class="col-md-8 clearfix">
+{#                                <label for="{{ form.status.id_for_label }}" class="col-md-4 control-label">状态</label>#}
+                                <div class="col-md-8">
                                     <div>
                                         {{ form.status }}
                                     </div>
-                                    <div class="error-msg"></div>
-
-                                </div>
-                            </div>
-                            <div class="col-md-6 pd-0">
-                                <label for=" {{ form.priority.id_for_label }}"
-                                       class="col-md-4 control-label">{{ form.priority.label }}</label>
-                                <div class="col-md-8">
-                                    <div>
-                                        {{ form.priority }}
-                                    </div>
-                                    <div class="error-msg"></div>
-
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group clearfix">
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label">指派给</label>
-                                <div class="col-md-8">
-                                    {{ form.assign }}
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label">关注者</label>
-                                <div class="col-md-8">
-                                    {{ form.attention }}
                                     <div class="error-msg"></div>
                                 </div>
                             </div>
@@ -214,29 +291,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group clearfix">
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label">模式</label>
-                                <div class="col-md-8">
-                                    <div>
-                                        {{ form.mode }}
-                                    </div>
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label"> 父问题</label>
-                                <div class="col-md-8">
-
-                                    {{ form.parent }}
-
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-                        </div>
-
-
                     </form>
                 </div>
             </div>
@@ -324,20 +378,124 @@
     <script src="{% static 'plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
     <script src="{% static 'plugins/select2/js/select2.min.js' %}"></script>
     <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
     <script>
         $(function () {
             initDatePicker()
             initEditorMd()
-            initSelect2()
             initReplay(1)
             bindReply()
             bindCancelReplyUser()
             bindSubmit()
             bindClearErrormsg()
+            if(!JSON.parse('{{ is_creater }}'.toLowerCase())){
+                setFormDisabled()
+            }
         })
 
-        function editData(){
-            // editForm
+         function initEditorImageZoom() {
+            function setupImageClick() {
+                // 查找编辑器中的所有图片
+                const $images = $('.editormd-preview-container img');
+
+                $images.each(function() {
+                    const $img = $(this);
+                    const src = $img.attr('src');
+
+                    if (src && !$img.parent().is('a[data-lightbox]')) {
+                        // 包装图片为可点击链接
+                        $img.wrap('<a href="' + src + '" data-lightbox="editor-images"></a>');
+                    }
+                });
+            }
+
+        // 立即执行一次
+        setupImageClick();
+
+        // 每2秒检查一次（因为编辑器内容可能异步加载）
+        const intervalId = setInterval(setupImageClick, 2000);
+
+        // 8秒后停止检查
+        setTimeout(() => {
+            clearInterval(intervalId);
+        }, 8000);
+    }
+
+        $('input').click(function () {
+            $(this).parent().next('div').text('')
+        })
+
+        $('select').change(function () {
+            $(this).parent().next('div').text('')
+        })
+
+        $('#editor').click(function () {
+            $(this).next('div.error-msg').text('')
+        })
+
+        function setFormDisabled() {
+            // 使用样式模拟禁用，但不实际禁用元素
+            $('#editForm select, #editForm input, #editForm textarea').css({
+                'background-color': '#f8f9fa',
+                'cursor': 'not-allowed',
+                'opacity': '0.7',
+                'pointer-events': 'none'
+            });
+
+            $('.select2-selection').css({
+                'background-color': '#f8f9fa',
+                'cursor': 'not-allowed',
+                'opacity': '0.7',
+                'pointer-events': 'none'
+            });
+
+            // 修改编辑器部分：只禁用编辑，保留滚动
+            $('#editor').css({
+                'opacity': '0.7',
+                'cursor': 'not-allowed'
+            });
+
+            // 禁用编辑器的工具栏和输入
+            $('#editor').attr('contenteditable', 'false');
+
+            // 隐藏工具栏
+            $('.editormd-toolbar').hide();
+
+            // 额外的防护：阻止编辑器内的键盘输入
+            $('#editor').on('keydown paste cut', function(e) {
+                e.preventDefault();
+                return false;
+            });
+        }
+
+        $('#id_version').change(function () {
+            const version_id = $(this).val()
+            $.ajax({
+                url: '{% url "web:demand" pid=request.proid %}',
+                type: 'GET',
+                data: {
+                    version: version_id
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        $('#id_demand').val('').trigger('change.select2');
+                        $('#id_demand').html('')
+                        $.each(res.errors_or_data.datas, function (idx, obj) {
+                            $('#id_demand').append(`<option value="${obj.id}">${obj.demand_name}</option>`)
+                        })
+                    }
+                }
+            })
+        })
+
+        function editData(type='form_submit'){
+            if(type === 'hasResolved'){
+                $('#id_status').val(3).trigger('change')
+            }
+            if(type === 'hasFixed'){
+                $('#id_status').val(2).trigger('change')
+            }
             $.ajax({
                     url: "{% url 'web:issue_edit' pid=request.proid issue_id=issue_id %}",
                     type: "POST",
@@ -345,12 +503,31 @@
                     dataType: "JSON",
                     success: function (res) {
                         if(res.status){
-                            alert('修改成功')
-                            window.location.reload()
-                        }else{
-                            $.each(res.errors_or_data, function (k, v) {
-                                $('#id_' + k).parent().next('.error-msg').text(v[0]);
+                            const result = showConfirm({
+                                title: type === 'form_submit'?'修改成功':'提交成功',
+                                message: '',
+                                confirmText: '确认',
+                                cancelText: '',
+                                type:'success'
+                            }).then(result => {
+                                if(result){
+                                    window.location.reload()
+                                }
                             })
+                        }else{
+                            if(typeof res.errors_or_data == "object"){
+                                $.each(res.errors_or_data, function (k, v) {
+                                    $('#id_' + k).parent().next('.error-msg').text(v[0]);
+                                })
+                            }else{
+                                showConfirm({
+                                    title: '',
+                                    message: res.errors_or_data,
+                                    confirmText: '确认',
+                                    cancelText: '',
+                                    type:'warning'
+                                })
+                            }
                         }
                     }
             })
@@ -424,10 +601,22 @@
                             }
                             $('#replyUser').addClass('hide').removeAttr('parent-id').children('span').text("")
                             $('#content').val('')
-                            alert('提交成功')
-                            $('html, body').animate({
-                                scrollTop: $target.offset().top
-                            }, 300); // 300ms 平滑滚动
+                            const result = showConfirm({
+                                title: '提交成功',
+                                message: '',
+                                confirmText: '确认',
+                                cancelText: '',
+                                type:'success'
+                            }).then(result => {
+                                if(result){
+                                    $('html, body').animate({
+                                        scrollTop: $target.offset().top
+                                    }, 300); // 300ms 平滑滚动
+                                }
+                            })
+
+
+
                         } else {
                             $.each(res.errors_or_data, function (k, v) {
                                 $('#content').next('.error-msg').text(v[0]);
@@ -596,17 +785,6 @@
         });
 
         // 组件初始化
-        function initSelect2() {
-            $('.select2').select2({}).on('select2:select', function (e) {
-                // 选中某一项触发
-                location.href = e.params.data.id;
-            }).on('select2:unselect', function (e) {
-                // 移除某一项触发
-                location.href = e.params.data.id;
-            });
-        }
-
-        // 组件初始化
         function initDatePicker() {
             $('#id_start_date,#id_end_date').datepicker({
                 format: 'yyyy-mm-dd',
@@ -627,6 +805,7 @@
                 imageUploadURL: "/account/manage/{{ request.proid }}/wiki/upload/?folder=bug",
                 onload: function () {
                     this.previewing();
+                    setTimeout(initEditorImageZoom, 500);
                 },
                 toolbarIcons: function () {
                     return ["bold", "hr", "del", "italic", "quote", "|", "image", "preview", "watch", "fullscreen", "||", "save"]
@@ -636,12 +815,6 @@
                 },
             })
         }
-
-        // 组件初始化
-        function saveDesc() {
-            alert(123)
-        }
-
 
     </script>
 

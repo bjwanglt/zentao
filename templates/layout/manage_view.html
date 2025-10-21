@@ -15,6 +15,10 @@
     <script src="{% static 'plugins/custom_confirm/custom-confirm.js' %}"></script>
     <link rel='stylesheet' href="{% static 'plugins/custom_confirm/custom-confirm.css' %}">
 
+    <script src="{% static 'plugins/select2/js/select2.js' %}"></script>
+    <link rel='stylesheet' href="{% static 'plugins/select2/css/select2.css' %}">
+    <link rel='stylesheet' href="{% static 'plugins/select2/css/select2_bootstrap.css' %}">
+
     <style>
         /* ---------- 导航栏整体 ---------- */
         .navbar {
@@ -262,6 +266,8 @@
                 <li><a href="{% url 'web:file' pid=request.proid %}">文件</a></li>
                 <li><a href="{% url 'web:overview' pid=request.proid %}">概览</a></li>
                 <li><a href="{% url 'web:statistics' pid=request.proid %}">统计</a></li>
+                <li><a href="{% url 'web:to_version_demand' pid=request.proid %}">项目配置</a></li>
+                <li><a href="{% url 'web:to_schedule_job' pid=request.proid %}">定时任务配置</a></li>
             </ul>
 
             {% if request.session.userinfo %}
@@ -425,6 +431,56 @@
         setupMessageIndicator();
         updateIndicatorBadge();
     });
+
+    $('.select2').select2({
+        theme: 'bootstrap',   // 对应 bootstrap3 的主题名
+        placeholder: '请选择',
+        allowClear: true,
+        width: '100%'         // 自动适配父容器宽度
+    });
+
+    // 渲染版本分页
+    function renderPagination(pagination, bind_dom_id, currentVersionPage,loadFunction) {
+        if (!pagination || pagination.total_pages <= 1) {
+            $(`#${bind_dom_id}`).html('');
+            return;
+        }
+
+        let html = '<ul class="pagination" style="margin: 0;">';
+
+        // 首页
+        html += `<li><a href="javascript:void(0)" onclick="${loadFunction}(1)">首页</a></li>`;
+
+        // 上一页
+        if (pagination.has_previous) {
+            html += `<li><a href="javascript:void(0)" onclick="${loadFunction}(${pagination.previous_page})">上一页</a></li>`;
+        } else {
+            html += `<li class="disabled"><a href="javascript:void(0)">上一页</a></li>`;
+        }
+
+        // 页码
+        for (let i = 1; i <= pagination.total_pages; i++) {
+            if (i === currentVersionPage) {
+                html += `<li class="active"><a href="javascript:void(0)">${i}</a></li>`;
+            } else {
+                html += `<li><a href="javascript:void(0)" onclick="${loadFunction}(${i})">${i}</a></li>`;
+            }
+        }
+
+        // 下一页
+        if (pagination.has_next) {
+            html += `<li><a href="javascript:void(0)" onclick="${loadFunction}(${pagination.next_page})">下一页</a></li>`;
+        } else {
+            html += `<li class="disabled"><a href="javascript:void(0)">下一页</a></li>`;
+        }
+
+        // 尾页
+        html += `<li><a href="javascript:void(0)" onclick="${loadFunction}(${pagination.total_pages})">尾页</a></li>`;
+
+        html += '</ul>';
+        // version-pagination-container
+        $(`#${bind_dom_id}`).html(html);
+    }
 </script>
 
 {% block js %}{% endblock %}

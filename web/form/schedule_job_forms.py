@@ -18,25 +18,28 @@ class job_form(BootstrapMixin, forms.Form):
     minutes_choices = [(i, i) for i in range(0, 60)]
 
     name = forms.CharField(label='自定义名称', widget=forms.TextInput())
-    task = forms.ChoiceField(label='任务类型',
-                             widget=forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}))
-    scheduler_hour = forms.ChoiceField(label='执行时间',
-                                       widget=forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}),
+    task = forms.ChoiceField(label='任务类型', widget=forms.Select(attrs={'class': "select2"}))
+    scheduler_hour = forms.ChoiceField(label='执行时间', widget=forms.Select(attrs={'class': "select2"}),
                                        choices=hours_choices)
-    scheduler_minute = forms.ChoiceField(label='执行时间', widget=forms.Select(
-        attrs={'class': "selectpicker", "data-live-search": "true"}), choices=minutes_choices)
+    scheduler_minute = forms.ChoiceField(label='执行时间', widget=forms.Select(attrs={'class': "select2"}),
+                                         choices=minutes_choices)
     args = forms.CharField(label="接收邮箱", widget=forms.Textarea(attrs=dict(placeholder='多个邮箱之间 ; 号间隔')))
-    project_id = forms.ChoiceField(label='项目',
-                                   widget=forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}))
+    project_id = forms.ChoiceField(label='项目', widget=forms.Select(attrs={'class': "select2"}))
     crontab_id = forms.IntegerField(required=False)
+    id = forms.IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
         super().__init__(*args, **kwargs)
+        celery_app.autodiscover_tasks(force=True)
+        self.__request = request
+        project_id = request.resolver_match.kwargs.get('pid')
         self.fields['task'].choices = [(name, name) for name in celery_app.tasks if not name.startswith('celery.')]
-        project_list = list(ProjectUser.objects.filter(user_role=1, user_id=request.userid).values_list('project_id',
-                                                                                                        'project_name').order_by(
-            '-id'))
+        project_list = list(
+            ProjectUser.objects.filter(project_id=project_id, user_role=1, user_id=request.userid).values_list(
+                'project_id',
+                'project_name').order_by(
+                '-id'))
         self.fields['project_id'].choices = project_list
 
     def clean_args(self):
@@ -64,7 +67,7 @@ class job_form(BootstrapMixin, forms.Form):
             self.cleaned_data['crontab_id'] = obj.id
         # 2 定时任务参数处理  格式示例 [["2597843280@qq.com"],100]
         val_args = self.cleaned_data.get('args', None)
-        val_project_id = self.cleaned_data.get('project_id', None)
+        val_project_id = self.__request.resolver_match.kwargs.get('pid')
         if val_args is not None and val_project_id is not None:
             self.cleaned_data['args'] = json.dumps([val_args, int(val_project_id)])
         print(self.cleaned_data)

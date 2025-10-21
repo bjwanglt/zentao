@@ -33,18 +33,18 @@ function showConfirm(options = {}) {
 
         // 对话框HTML结构
         dialog.innerHTML = `
-            <div class="confirm-header">
-                <div class="confirm-icon ${config.type}">
-                    ${iconMap[config.type] || iconMap.warning}
-                </div>
-                <h3 class="confirm-title">${config.title}</h3>
+        <div class="confirm-header">
+            <div class="confirm-icon ${config.type}">
+                ${iconMap[config.type] || iconMap.warning}
             </div>
-            <div class="confirm-message">${config.message}</div>
-            <div class="confirm-footer">
-                <button type="button" class="confirm-btn confirm-btn-cancel">${config.cancelText}</button>
-                <button type="button" class="confirm-btn ${config.confirmButtonClass}">${config.confirmText}</button>
-            </div>
-        `;
+            <h3 class="confirm-title">${config.title}</h3>
+        </div>
+        <div class="confirm-message">${config.message}</div>
+        <div class="confirm-footer">
+            ${config.cancelText ? `<button type="button" class="confirm-btn confirm-btn-cancel">${config.cancelText}</button>` : ''}
+            <button type="button" class="confirm-btn ${config.confirmButtonClass}">${config.confirmText}</button>
+        </div>
+    `;
 
         overlay.appendChild(dialog);
         document.body.appendChild(overlay);
@@ -64,11 +64,14 @@ function showConfirm(options = {}) {
             resolve(true);
         });
 
-        // 取消按钮点击事件
-        cancelBtn.addEventListener('click', () => {
-            closeDialog();
-            resolve(false);
-        });
+        if (cancelBtn) {
+            // 取消按钮点击事件
+            cancelBtn.addEventListener('click', () => {
+                closeDialog();
+                resolve(false);
+            });
+        }
+
 
         // 点击遮罩层关闭
         overlay.addEventListener('click', (e) => {

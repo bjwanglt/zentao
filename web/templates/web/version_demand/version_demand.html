@@ -1,0 +1,849 @@
+{% extends 'layout/manage_view.html' %}
+{% load static %}
+{% load ai_tags %}
+{% load page_info %}
+{% load job %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'plugins/ai/ai.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
+    <style>
+        .issues-list .number {
+            width: 100px;
+            text-align: right;
+        }
+
+        .issues-list .number a {
+            font-weight: 500;
+            padding: 0 10px;
+        }
+
+        .issues-list .issue .tags {
+            padding: 10px 0;
+        }
+
+        .issues-list .issue .tags span {
+            margin-right: 20px;
+            display: inline-block;
+            font-size: 12px;
+        }
+
+        .issues-list .issue .tags .type {
+            color: white;
+            padding: 1px 5px;
+            border-radius: 5px;
+            background-color: #3d82c7;
+        }
+
+        .editormd {
+            margin-bottom: 0;
+        }
+
+        .pd-0 {
+            padding: 0 !important;
+        }
+
+        /* 筛选 */
+        .filter-area .item {
+            margin-bottom: 15px;
+        }
+
+        .filter-area .item .title {
+            padding: 5px 0;
+        }
+
+        .filter-area .item .check-list a {
+            text-decoration: none;
+            display: inline-block;
+            min-width: 65px;
+        }
+
+        .filter-area .item .check-list label {
+            font-weight: 200;
+            font-size: 13px;
+            margin-left: 3px;
+        }
+
+        .filter-area .item .check-list a:hover {
+            font-weight: 300;
+        }
+
+        .filter-area .item .check-list .cell {
+            margin-right: 10px;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: #d9534f;
+        }
+
+        /* 分页样式 - 调整到左边，无边框 */
+        .pagination-container {
+            padding: 15px 0;
+            text-align: left;
+            background: none;
+            border: none;
+        }
+
+        .panel-body + .pagination-container {
+            margin-top: 0;
+        }
+
+        /* 表格美化样式 */
+        .table-container {
+            margin-bottom: 0;
+        }
+
+        .table-custom {
+            margin-bottom: 0;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .table-custom thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            padding: 12px 15px;
+        }
+
+        .table-custom tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-custom tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 任务名称可点击样式 */
+        .task-name-clickable {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .task-name-clickable:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        /* 操作列样式 */
+        .table-actions {
+            width: 150px;
+            text-align: center;
+        }
+
+        .table-actions .btn {
+            margin: 0 3px;
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+
+        /* 面板样式调整 */
+        .panel-body {
+            padding-bottom: 10px;
+        }
+
+        /* 筛选框样式 */
+        .filter-area {
+            padding: 15px;
+        }
+
+        /* 右下角按钮样式 */
+        .text-right .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+
+        /* 详情模态框表格样式 */
+        .detail-table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .detail-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            width: 30%;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .detail-table td {
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        /* 数据表格样式 */
+        .data-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        /* 弹窗分页样式 */
+        .modal-pagination-container {
+            padding: 10px 0;
+            text-align: center;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-pagination {
+            margin: 0;
+        }
+
+        .modal-pagination .pagination {
+            margin: 0;
+        }
+
+        /* 新增样式：标签页 */
+        .nav-tabs {
+            margin-bottom: 15px;
+        }
+
+        .tab-content {
+            padding: 15px 0;
+        }
+
+        .demand-detail {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: default;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid clearfix" style="padding: 20px 0;">
+        <!-- 标签页导航 -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active">
+                <a href="#version-tab" aria-controls="version-tab" role="tab" data-toggle="tab">
+                    <i class="fa fa-code-fork"></i> 项目版本
+                </a>
+            </li>
+            <li role="presentation">
+                <a href="#demand-tab" aria-controls="demand-tab" role="tab" data-toggle="tab">
+                    <i class="fa fa-tasks"></i> 项目需求
+                </a>
+            </li>
+        </ul>
+
+        <!-- 筛选区域 -->
+        <div class="tab-content">
+            <!-- 项目版本标签页 -->
+            <div role="tabpanel" class="tab-pane active" id="version-tab">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <i class="fa fa-search" aria-hidden="true"></i> 版本筛选
+                            </div>
+                            <div class="panel-body filter-area">
+                                <form id="version-filter-form">
+                                    <div class="form-group">
+                                        <label for="versionFilter">版本号:</label>
+                                        <input name='version' type="text" class="form-control" id="versionFilter"
+                                               placeholder="请输入版本号">
+                                    </div>
+                                </form>
+                                <div class="text-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="versionFilterBtn">
+                                        <i class="fa fa-search" aria-hidden="true"></i> 查询
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-9">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <i class="fa fa-code-fork" aria-hidden="true"></i> 版本列表
+                            </div>
+                            <div class="panel-body">
+                                <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#versionModal">
+                                    <i class="fa fa-plus"></i> 新建版本
+                                </a>
+                            </div>
+                            <div id="version-container" class="table-container">
+                                <!-- 版本列表将通过AJAX动态加载 -->
+                            </div>
+                        </div>
+                        <div class="pagination-container" id="version-pagination-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 项目需求标签页 -->
+            <div role="tabpanel" class="tab-pane" id="demand-tab">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <i class="fa fa-search" aria-hidden="true"></i> 需求筛选
+                            </div>
+                            <div class="panel-body filter-area">
+                                <form id="demand-filter-form">
+                                    <div class="form-group">
+                                        <label for="demandNameFilter">需求名称:</label>
+                                        <input name='demand_name' type="text" class="form-control" id="demandNameFilter"
+                                               placeholder="请输入需求名称">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="versionSelectFilter">迭代版本:</label>
+                                        <select name="version" class="form-control" id="versionSelectFilter">
+                                            <option value="">全部版本</option>
+                                            {% for item in version_options %}
+                                                <option value="{{ item.id }}">{{ item.version }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                                <div class="text-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="demandFilterBtn">
+                                        <i class="fa fa-search" aria-hidden="true"></i> 查询
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-9">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <i class="fa fa-tasks" aria-hidden="true"></i> 需求列表
+                            </div>
+                            <div class="panel-body">
+                                <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#demandModal">
+                                    <i class="fa fa-plus"></i> 新建需求
+                                </a>
+                            </div>
+                            <div id="demand-container" class="table-container">
+                                <!-- 需求列表将通过AJAX动态加载 -->
+                            </div>
+                        </div>
+                        <div class="pagination-container" id="demand-pagination-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本表单模态框 -->
+    <div id="versionModal" class="modal fade" tabindex="-1" role="dialog"
+         aria-labelledby="versionModalLabel">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="versionModalTitle">新建版本</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="versionForm" class="form-horizontal">
+                        {% csrf_token %}
+                        <input type="hidden" id="edit_version_id" name="id">
+
+                        <input type="hidden" name="project" value="{{ request.proid }}">
+
+                        <div class="form-group">
+                            <label for="id_version" class="col-md-3 control-label">版本号</label>
+                            <div class="col-md-9">
+                                <div>
+                                    <input type="text" name="version" class="form-control" id="id_version"
+                                           placeholder="请输入版本号，如：v1.0.0">
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                    <button type="button" class="btn btn-primary" id="btnVersionSubmit">添 加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 需求表单模态框 -->
+    <div id="demandModal" class="modal fade" tabindex="-1" role="dialog"
+         aria-labelledby="demandModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="demandModalTitle">新建需求</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="demandForm" class="form-horizontal">
+                        {% csrf_token %}
+                        <input type="hidden" id="edit_demand_id" name="id">
+
+                        <div class="form-group">
+                            <label for="id_demand_version" class="col-md-3 control-label">迭代版本</label>
+                            <div class="col-md-9">
+                                <div>
+                                    <select name="version" class="form-control" id="id_demand_version">
+                                        {% for item in version_options %}
+                                            <option value="{{ item.id }}">{{ item.version }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="id_demand_name" class="col-md-3 control-label">需求名称</label>
+                            <div class="col-md-9">
+                                <div>
+                                    <input type="text" name="demand_name" class="form-control" id="id_demand_name"
+                                           placeholder="请输入需求名称">
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="id_demand_detail" class="col-md-3 control-label">需求详情</label>
+                            <div class="col-md-9">
+                                <div>
+                                    <textarea name="demand_detail" class="form-control" id="id_demand_detail"
+                                              placeholder="请输入需求详情" rows="4"></textarea>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取 消</button>
+                    <button type="button" class="btn btn-primary" id="btnDemandSubmit">添 加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'plugins/ai/ai.js' %}"></script>
+    <script src="{% static 'plugins/editor-md/editormd.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+    <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
+
+    <script>
+        let currentVersionPage = 1;
+        let currentDemandPage = 1;
+
+        $(function () {
+            // 初始化页面
+            loadVersions();
+            loadDemands();
+
+            // 绑定事件
+            bindVersionEvents();
+            bindDemandEvents();
+        });
+
+        // ==================== 版本管理功能 ====================
+        function bindVersionEvents() {
+            // 版本筛选
+            $('#versionFilterBtn').click(function () {
+                loadVersions(1);
+            });
+
+            // 版本表单提交
+            $('#btnVersionSubmit').click(function () {
+                submitVersionForm();
+            });
+
+            // 版本模态框显示事件
+            $('#versionModal').on('show.bs.modal', function () {
+                setVersionCreateMode();
+            });
+        }
+
+        // 加载版本列表
+        function loadVersions(page = 1) {
+            currentVersionPage = page;
+
+            $.ajax({
+                url: '{% url "web:version" pid=request.proid%}',
+                type: 'GET',
+                data: {
+                    'page': page,
+                    'version': $('#versionFilter').val()
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        renderVersions(res.errors_or_data.datas);
+                        renderPagination(res.errors_or_data.pagination, 'version-pagination-container', currentVersionPage, 'loadVersions');
+                    }
+                }
+            })
+        }
+
+        // 渲染版本列表
+        function renderVersions(versions) {
+            if (!versions || versions.length === 0) {
+                $('#version-container').html('<div class="loading">暂无版本数据</div>');
+                return;
+            }
+
+            let html = `
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%">版本号</th>
+                            <th style="width: 40%">项目</th>
+                            <th class="table-actions">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            versions.forEach(function (item) {
+                html += `
+                    <tr>
+                        <td>
+                            <div class="task-name-clickable">
+                                <i class="fa fa-tag"></i> ${item.version}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500; color: #333;">${item.project__name}</div>
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-primary btn-xs" onclick="editVersion(${item.id})" title="修改">
+                                <i class="fa fa-edit"></i> 修改
+                            </button>
+                            <button class="btn btn-danger btn-xs" onclick="deleteVersion(${item.id})" title="删除">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            $('#version-container').html(html);
+        }
+
+
+        // 设置版本新建模式
+        function setVersionCreateMode() {
+            $('#versionModalTitle').text('新建版本');
+            $('#btnVersionSubmit').text('添 加');
+            $('#edit_version_id').val('');
+            $('#versionForm')[0].reset();
+        }
+
+        // 设置版本修改模式
+        function setVersionEditMode(versionId) {
+            $('#versionModalTitle').text('修改版本');
+            $('#btnVersionSubmit').text('修 改');
+            $('#edit_version_id').val(versionId);
+        }
+
+        // 修改版本
+        function editVersion(id) {
+            // 回填数据
+            // 显示模态框
+            $('#versionModal').modal('show');
+            // 设置修改模式
+            setVersionEditMode(id);
+            $.ajax({
+                url: '{% url "web:version" pid=request.proid%}',
+                type: "GET",
+                data: {
+                    'id': id
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        $('#edit_version_id').val(res.errors_or_data.datas[0].id);
+                        $('#id_version').val(res.errors_or_data.datas[0].version);
+                    }
+                }
+            })
+        }
+
+        // 删除版本
+        function deleteVersion(id) {
+            const result = showConfirm({
+                title: '确认删除',
+                message: '确定要删除这个版本吗？',
+                confirmText: '删除',
+                cancelText: '取消',
+                type: 'danger'
+            }).then(result => {
+                if (result) {
+                    $.ajax({
+                        url: '{% url "web:version" pid=request.proid%}',
+                        type: "DELETE",
+                        contentType: 'application/json',
+                        data: JSON.stringify({id: id}),
+                        dataType: 'JSON',
+                        success: function (res) {
+                            if (res.status) {
+                                showSuccess('删除成功');
+                                loadVersions(currentVersionPage);
+                                $(`#id_demand_version option[value="${id}"]`).remove()
+                                $(`#versionSelectFilter option[value="${id}"]`).remove()
+                            } else {
+                                showWarning(res.errors_or_data)
+                            }
+                        }
+                    })
+
+                }
+            });
+        }
+
+        // 提交版本表单
+        function submitVersionForm() {
+            const versionId = $('#edit_version_id').val();
+            const form_data = $('#versionForm').serialize()
+            $.ajax({
+                url: '{% url 'web:version' pid=request.proid %}',
+                type: 'POST',
+                data: form_data,
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        showSuccess(versionId ? '修改成功' : '新建成功');
+                        $('#versionModal').modal('hide');
+                        loadVersions(currentVersionPage);
+                        versionId ? (
+                            $(`#id_demand_version option[value="${versionId}"]`).remove() &&
+                            $('#id_demand_version').append(`<option value="${versionId}">${$('#id_version').val()}</option>`)&&
+                            $(`#versionSelectFilter option[value="${versionId}"]`).remove() &&
+                            $('#versionSelectFilter').append(`<option value="${versionId}">${$('#id_version').val()}</option>`)
+
+                        )
+                        : $('#id_demand_version').append(`<option value="${res.errors_or_data}">${$('#id_version').val()}</option>`) &&
+                          $('#versionSelectFilter').append(`<option value="${res.errors_or_data}">${$('#id_version').val()}</option>`)
+                        ;
+                    } else {
+                        $.each(res.errors_or_data, function (k, v) {
+                            $('#id_' + k).next('.error-msg').text(v[0]);
+                        });
+                    }
+                }
+            })
+        }
+
+        // ==================== 需求管理功能 ====================
+        function bindDemandEvents() {
+            // 需求筛选
+            $('#demandFilterBtn').click(function () {
+                loadDemands(1);
+            });
+
+            // 需求表单提交
+            $('#btnDemandSubmit').click(function () {
+                submitDemandForm();
+            });
+
+            // 需求模态框显示事件
+            $('#demandModal').on('show.bs.modal', function () {
+                setDemandCreateMode();
+            });
+        }
+
+        // 加载需求列表
+        function loadDemands(page = 1) {
+            currentDemandPage = page;
+            $.ajax({
+                url: '{% url "web:demand" pid=request.proid%}',
+                type: 'GET',
+                data: {
+                    'page': page,
+                    'demand_name': $('#demandNameFilter').val(),
+                    'version': $('#versionSelectFilter').val()
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        renderDemands(res.errors_or_data.datas);
+                        renderPagination(res.errors_or_data.pagination, 'demand-pagination-container', currentDemandPage, 'loadDemands');
+                    }
+                }
+            })
+        }
+
+        // 渲染需求列表
+       function renderDemands(demands) {
+            if (!demands || demands.length === 0) {
+                $('#demand-container').html('<div class="loading">暂无需求数据</div>');
+                return;
+            }
+
+            let html = `
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%">需求名称</th>
+                            <th style="width: 15%">迭代版本</th>
+                            <th style="width: 15%">需求名称</th>
+                            <th style="width: 30%">需求详情</th>
+                            <th class="table-actions">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            demands.forEach(function (item) {
+                html += `
+                    <tr>
+                        <td>
+                            <div class="task-name-clickable">
+                                <i class="fa fa-tasks"></i> ${item.demand_name}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="label label-primary">${item.version__version}</span>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500; color: #333;">${item.demand_name}</div>
+                        </td>
+                        <td>
+                            <div class="demand-detail" title="${(item.demand_detail || '').replace(/"/g, '&quot;')}">
+                                ${item.demand_detail || ''}
+                            </div>
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-primary btn-xs" onclick="editDemand(${item.id})" title="修改">
+                                <i class="fa fa-edit"></i> 修改
+                            </button>
+                            <button class="btn btn-danger btn-xs" onclick="deleteDemand(${item.id})" title="删除">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            $('#demand-container').html(html);
+        }
+
+        // 设置需求新建模式
+        function setDemandCreateMode() {
+            $('#demandModalTitle').text('新建需求');
+            $('#btnDemandSubmit').text('添 加');
+            $('#edit_demand_id').val('');
+            $('#demandForm')[0].reset();
+        }
+
+        // 设置需求修改模式
+        function setDemandEditMode(demandId) {
+            $('#demandModalTitle').text('修改需求');
+            $('#btnDemandSubmit').text('修 改');
+            $('#edit_demand_id').val(demandId);
+        }
+
+        // 修改需求
+        function editDemand(id) {
+             // 显示模态框
+            $('#demandModal').modal('show');
+            // 设置修改模式
+            setDemandEditMode(id);
+            $.ajax({
+                url: '{% url "web:demand" pid=request.proid%}',
+                type: "GET",
+                data: {
+                    'id': id
+                },
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        $('#edit_demand_id').val(res.errors_or_data.datas[0].id);
+                        $('#id_demand_version').val(res.errors_or_data.datas[0].version_id);
+                        $('#id_demand_name').val(res.errors_or_data.datas[0].demand_name);
+                        $('#id_demand_detail').val(res.errors_or_data.datas[0].demand_detail);
+
+                    }
+                }
+            })
+        }
+
+        // 删除需求
+        function deleteDemand(id) {
+            const result = showConfirm({
+                title: '确认删除',
+                message: '确定要删除这个需求吗？',
+                confirmText: '删除',
+                cancelText: '取消',
+                type: 'danger'
+            }).then(result => {
+                if (result) {
+                    $.ajax({
+                        url: '{% url "web:demand" pid=request.proid%}',
+                        type: "DELETE",
+                        contentType: 'application/json',
+                        data: JSON.stringify({id: id}),
+                        dataType: 'JSON',
+                        success: function (res) {
+                            if (res.status) {
+                                showSuccess('删除成功');
+                                loadDemands(1);
+                            } else {
+                                showWarning(res.errors_or_data)
+                            }
+                        }
+                    })
+                }
+            });
+        }
+
+        // 提交需求表单
+        function submitDemandForm() {
+            const demandId = $('#edit_demand_id').val();
+            $.ajax({
+                url: '{% url 'web:demand' pid=request.proid %}',
+                type: 'POST',
+                data: $('#demandForm').serialize(),
+                dataType: 'JSON',
+                success: function (res) {
+                    if (res.status) {
+                        showSuccess(demandId ? '修改成功' : '新建成功');
+                        $('#demandModal').modal('hide');
+                        loadDemands(currentVersionPage);
+                    } else {
+                        $.each(res.errors_or_data, function (k, v) {
+                            $('#id_' + k).next('.error-msg').text(v[0]);
+                        });
+                    }
+                }
+            })
+        }
+    </script>
+{% endblock %}

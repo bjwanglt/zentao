@@ -1,39 +1,61 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.http.request import HttpRequest
 from django.db.models import Q
 
 from web import models
 from web.form.FormMixin import BootstrapMixin
+from web.models import ProjectVersion, ProjectDemand
+
+
+class SkipValidModelChoiceField(forms.models.ModelChoiceField):
+
+    def to_python(self, value):
+        if value in self.empty_values:
+            return None
+        try:
+            key = self.to_field_name or 'pk'
+            if isinstance(value, ProjectDemand):
+                value = getattr(value, key)
+            value = ProjectDemand.objects.get(**{key: value})
+        except (ValueError, TypeError, self.queryset.model.DoesNotExist):
+            raise ValidationError(self.error_messages['invalid_choice'], code='invalid_choice')
+        return value
 
 
 class IssusForm(BootstrapMixin, forms.ModelForm):
-
     def __init__(self, request: HttpRequest, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
-        # self.fields.get('assign').queryset = models.UserInfo.objects.exclude(id=request.userid)
+        project_id = request.resolver_match.kwargs.get('pid')
         # 指派和关注的用户需要归属当前项目
         assign_list = [('', '--------')]
-        project_user_info = models.ProjectUser.objects.filter(project_id=request.proid).values_list('user_id','user_name')
+        if self.instance and self.instance.pk:
+            # 数据修改
+            project_user_info = models.ProjectUser.objects \
+                .filter(user_id=self.instance.assign_id, project_id=project_id) \
+                .exclude(user_id=self.instance.creator_id) \
+                .values_list('user_id', 'user_name')
+        else:
+            # 数据新建
+            project_user_info = models.ProjectUser.objects\
+                .filter(project_id=project_id)\
+                .exclude(user_id=request.userid).values_list('user_id', 'user_name')
         assign_list.extend(project_user_info)
         self.fields.get('assign').choices = assign_list
-        self.fields.get('attention').choices = project_user_info
-        # 模块需要归属当前项目
-        module_list = [('', '--------')]
-        module_list.extend(
-            models.Module.objects.filter(project_id=request.proid).values_list('id', 'title')
-        )
-        self.fields.get('module').choices = module_list
-        # 父问题需要归属当前项目(修改时，排除自己)
-        q = Q()
-        q.connector = 'AND'
-        q.children.append(('project_id', request.proid))
-        if self.instance and self.instance.pk:
-            q.children.append(~Q(id=self.instance.pk))
-        self.fields.get('parent').queryset = models.Issues.objects.filter(q)
+        # 获取项目下的版本
+        self.fields.get('version').queryset = ProjectVersion.objects.filter(project_id=project_id)
+
+        self.fields.get('demand').queryset = ProjectDemand.objects.none()
+        if self.instance.version_id:
+            self.fields.get('demand').queryset = ProjectDemand.objects.filter(version_id=self.instance.version_id)
+        if self.data.get('demand', ''):
+            self.fields.get('demand').queryset = ProjectDemand.objects.filter(version__project_id=project_id)
+
         # 时间格式
         self.fields.get('start_date').input_formats = ['%Y-%m-%d']
         self.fields.get('end_date').input_formats = ['%Y-%m-%d']
+        print(f'{type(self.fields.get("version"))=}')
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -50,14 +72,16 @@ class IssusForm(BootstrapMixin, forms.ModelForm):
         fields = '__all__'
         exclude = ['project', 'creator', 'create_datetime', 'latest_update_datetime']
         widgets = {
-            'assign': forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}),
-            'issues_type': forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}),
-            'module': forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}),
-            "attention": forms.SelectMultiple(
-                attrs={'class': "selectpicker", "data-live-search": "true", "data-actions-box": "true"}),
-            "parent": forms.Select(attrs={'class': "selectpicker", "data-live-search": "true"}),
+            'mode': forms.Select(attrs={'class': "select2"}),
+            'priority': forms.Select(attrs={'class': "select2"}),
+            'status': forms.Select(attrs={'style': 'display:none'}),
+            'assign': forms.Select(attrs={'class': "select2"}),
+            'issues_type': forms.Select(attrs={'class': "select2"}),
+            'module': forms.Select(attrs={'class': "select2"}),
             "start_date": forms.DateTimeInput(format='%Y-%m-%d', attrs={'autocomplete': "off"}),
-            "end_date": forms.DateTimeInput(format='%Y-%m-%d', attrs={'autocomplete': "off"})
+            "end_date": forms.DateTimeInput(format='%Y-%m-%d', attrs={'autocomplete': "off"}),
+            'version': forms.Select(attrs={'class': "select2"}),
+            'demand': forms.Select(attrs={'class': "select2"}),
         }
 
 

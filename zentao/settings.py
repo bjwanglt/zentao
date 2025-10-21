@@ -226,6 +226,7 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
 
 # 日志配置，使用python内置的logging
+'''
 LOGGING = {
     'version': 1,  # 使用的日志模块的版本，目前官方提供的只有版本1，但是官方有可能会升级，为了避免升级出现的版本问题，所以这里固定为1
     'disable_existing_loggers': False,  # 是否禁用其他的已经存在的日志功能？肯定不能，有可能有些第三方模块在调用，所以禁用了以后，第三方模块无法捕获自身出现的异常了。
@@ -279,7 +280,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': BASE_DIR.parent / "logs/zentao.log",
+            'filename': BASE_DIR.parent / "pro_logs/zentao/zentao.log",
             'when': 'midnight',  # 每天午夜切换日志文件
             'interval': 1,  # 每 1 天
             'backupCount': 10,  # 保留10天的日志
@@ -289,7 +290,7 @@ LOGGING = {
         'celery_file': {
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': BASE_DIR.parent / "logs/celery.log",
+            'filename': BASE_DIR.parent / "pro_logs/zentao/celery.log",
             'when': 'midnight',  # 每天午夜切换日志文件
             'interval': 1,  # 每 1 天
             'backupCount': 10,  # 保留10天的日志
@@ -309,6 +310,9 @@ LOGGING = {
         },
     }
 }
+'''
+
+USER_INFO_CACHE_PREFIX = 'sys_cache_user_info_'
 
 try:
     from .local_settings import *

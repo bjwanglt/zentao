@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from utils.user_info_cache import user_info_cache
 
 
 class WebConfig(AppConfig):
@@ -7,5 +6,6 @@ class WebConfig(AppConfig):
     name = 'web'
 
     def ready(self):
-        user_info_cache(9)
-        from web.handlers import insert_into_user_cache
+        from utils.user_info_cache import user_info_cache
+        user_info_cache(user_id=None)
+        from web import handlers

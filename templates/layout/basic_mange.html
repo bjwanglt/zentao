@@ -261,9 +261,6 @@
                     </a>
                     {% get_pro_info request %}
                 </li>
-                <li>
-                    <a href="{% url 'web:to_schedule_job' %}"> <i class="fa fa-cog"></i> 定时任务配置 </a>
-                </li>
             </ul>
             {% if request.session.userinfo %}
                 <ul class="nav navbar-nav navbar-right">

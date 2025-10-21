@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
     <style>
         .issues-list .number {
             width: 100px;
@@ -261,7 +262,7 @@
         </div>
     </div>
 
-    <!-- 新建/修改问题模态框（共用） -->
+    <!-- 新建问题模态框 -->
     <div id="addModal" class="modal fade" tabindex="-1" role="dialog"
          aria-labelledby="myModalLabel">
         <div class="modal-dialog modal-md" role="document">
@@ -270,14 +271,11 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    <h4 class="modal-title" id="modalTitle">新建任务</h4>
+                    <h4 class="modal-title">新建任务</h4>
                 </div>
                 <div class="modal-body">
                     <form id="addForm" class="form-horizontal">
                         {% csrf_token %}
-                        <!-- 隐藏字段，用于区分新建和修改 -->
-                        <input type="hidden" id="edit_task_id" name="id">
-
                         <div class="form-group">
                             <label for="{{ form.name.id_for_label }}"
                                    class="col-md-3 control-label">{{ form.name.label }}</label>
@@ -319,6 +317,7 @@
                             </div>
                         </div>
 
+
                         <div class="form-group">
                             <label class="col-md-3 control-label">执行时间</label>
                             <div class="col-md-9">
@@ -333,6 +332,7 @@
                                 <div class="error-msg" id="scheduler_hour"></div>
                             </div>
                         </div>
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -355,6 +355,45 @@
                     <h4 class="modal-title">执行数据</h4>
                 </div>
                 <div class="modal-body">
+                    <!-- 基本信息表格 -->
+                    <!--
+                    <div class="basic-info">
+                        <h5>基本信息</h5>
+                        <table class="table table-bordered detail-table">
+                            <tbody>
+                            <tr>
+                                <th>任务名称</th>
+                                <td id="detail-name">-</td>
+                            </tr>
+                            <tr>
+                                <th>任务类型</th>
+                                <td id="detail-task">-</td>
+                            </tr>
+                            <tr>
+                                <th>项目ID</th>
+                                <td id="detail-project">-</td>
+                            </tr>
+                            <tr>
+                                <th>接收邮箱</th>
+                                <td id="detail-args">-</td>
+                            </tr>
+                            <tr>
+                                <th>执行时间</th>
+                                <td id="detail-schedule">-</td>
+                            </tr>
+                            <tr>
+                                <th>状态</th>
+                                <td id="detail-status">-</td>
+                            </tr>
+                            <tr>
+                                <th>创建时间</th>
+                                <td id="detail-created">-</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    -->
+
                     <!-- 数据表格 -->
                     <div class="data-section">
                         <div class="data-table-container">
@@ -390,6 +429,7 @@
     <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-select/js/bootstrap-select.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
+    <script src="{% static 'plugins/select2/js/select2.min.js' %}"></script>
     <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
 
     <script>
@@ -402,9 +442,7 @@
             bindBootStrapShownEvent();
             bindAddSubmit();
             bindClickCheckFilter();
-
-            // 新增：模态框显示时初始化
-            initModalEvents();
+            initSelect2()
         });
 
         $('#filterBtn').click(function () {
@@ -417,7 +455,7 @@
             $('#pagination-container').empty();
 
             $.ajax({
-                url: '{% url 'web:schedule_job' pid=request.proid %}',
+                url: '{% url 'web:schedule_job' %}',
                 type: 'GET',
                 data: {
                     page: page,
@@ -446,11 +484,10 @@
                 <table class="table table-custom">
                     <thead>
                         <tr>
-                            <th style="width: 15%">任务名称</th>
-                            <th style="width: 15%">报表类型</th>
-                            <th style="width: 15%">接收邮箱</th>
-                            <th style="width: 15%">执行时间</th>
-                            <th style="width: 15%">是否启用</th>
+                            <th style="width: 18%">任务名称</th>
+                            <th style="width: 18%">接收邮箱</th>
+                            <th style="width: 18%">执行时间</th>
+                            <th style="width: 18%">是否启用</th>
                             <th class="table-actions">操作</th>
                         </tr>
                     </thead>
@@ -464,9 +501,6 @@
                             <div class="task-name-clickable" onclick="showTaskDetail('${item.name}')" title="点击查看详情">
                                 <i class="fa fa-info-circle"></i> ${item.name}
                             </div>
-                        </td>
-                        <td>
-                            <div style="font-weight: 500; color: #333;">${item.task}</div>
                         </td>
                         <td>
                             <div style="font-weight: 500; color: #333;">${item.args}</div>
@@ -545,71 +579,6 @@
             $('#pagination-container').html(html);
         }
 
-        // 修改问题
-        function editIssue(id) {
-            // URL: GET /api/schedule_job/{id}/
-            // 需要后端提供获取单个任务详情的接口
-            $.ajax({
-                url: "{% url 'web:schedule_job' pid=request.proid %}", // 预留API，需要后端实现
-                type: 'GET',
-                data: {'task_id': id},
-                success: function (res) {
-                    if (res.status) {
-                        // 回填表单数据
-                        fillFormData(res.errors_or_data.datas[0]);
-                        // 设置修改模式
-                        setEditMode(id);
-                        // 显示模态框
-                        $('#addModal').modal('show');
-                    } else {
-                        showError('获取任务详情失败');
-                    }
-                },
-                error: function () {
-                    showError('网络错误，请重试');
-                }
-            });
-        }
-
-        // 回填表单数据
-        function fillFormData(data) {
-            $('#edit_task_id').val(data.id);
-            $('#id_name').val(data.name);
-            $('#id_task').val(data.task);
-            $('#id_project_id').val({{ request.pid }});
-            $('#id_args').val(data.args);
-            $('#id_scheduler_hour').val(data.crontab__hour).trigger('change');
-            $('#id_scheduler_minute').val(data.crontab__minute).trigger('change');
-        }
-
-        // 设置修改模式
-        function setEditMode(taskId) {
-            $('#modalTitle').text('修改任务');
-            $('#btnAddSubmit').text('修 改');
-            $('#edit_task_id').val(taskId);
-        }
-
-        // 设置新建模式
-        function setCreateMode() {
-            $('#modalTitle').text('新建任务');
-            $('#btnAddSubmit').text('添 加');
-            $('#edit_task_id').val('');
-            $('#addForm')[0].reset();
-        }
-
-        // 初始化模态框事件
-        function initModalEvents() {
-            // 新建按钮点击时设置为新建模式
-            $('a[data-target="#addModal"]').click(function () {
-                setCreateMode();
-            });
-
-            // 模态框隐藏时清理错误信息
-            $('#addModal').on('hidden.bs.modal', function () {
-                $("#addForm").find('.error-msg').empty();
-            });
-        }
-
         // 显示任务详情
         function showTaskDetail(taskName, page = 1) {
             currentDetailPage = page;
@@ -619,8 +588,10 @@
             $('#data-table-body').html('<tr><td colspan="5" class="text-center">加载中...</td></tr>');
             $('#modal-pagination-container').empty();
 
+            // 模拟AJAX请求获取任务详情
+            // 在实际应用中，这里应该调用真实的API接口
             $.ajax({
-                url: '{% url "web:schedule_job_result" pid=request.proid %}',
+                url: '{% url "web:schedule_job_result" %}', // 预留的API接口地址
                 type: 'GET',
                 data: {
                     page: page,
@@ -630,11 +601,9 @@
                     if (res.status) {
                         fillTaskDetail(res.errors_or_data);
                     } else {
-                        $('#data-table-body').html('<tr><td colspan="5" class="text-center">加载失败</td></tr>');
                     }
                 },
                 error: function () {
-                    $('#data-table-body').html('<tr><td colspan="5" class="text-center">网络错误</td></tr>');
                 }
             });
 
@@ -643,6 +612,17 @@
 
         // 渲染任务执行数据
         function fillTaskDetail(realData) {
+            // 填充基本信息
+            /*
+                $('#detail-name').text(realData.name || '-');
+                $('#detail-task').text(realData.task || '-');
+                $('#detail-project').text(realData.project_id || '-');
+                $('#detail-args').text(realData.args || '-');
+                $('#detail-schedule').text(realData.schedule || '-');
+                $('#detail-status').text(realData.enabled ? '启用' : '禁用');
+                $('#detail-created').text(realData.created_at || '-');
+            */
+
             // 渲染执行数据和分页
             renderExecutionData(realData || []);
             if (realData.pagination) {
@@ -679,10 +659,11 @@
             $('#data-table-body').html(html);
         }
 
+
         // 失败任务重试
         function retry_task(task_id, task_name) {
             $.ajax({
-                url: '{% url "web:schedule_job_retry" pid=request.proid %}',
+                url: '{% url "web:schedule_job_retry" %}',
                 type: 'POST',
                 data: {
                     task_id: task_id,
@@ -690,9 +671,9 @@
                 },
                 dataType: 'JSON',
                 success: function (res) {
-                    if (res.status) {
+                    if(res.status){
                         showSuccess('请稍后查看')
-                    } else {
+                    }else{
                         showWarning(res.errors_or_data)
                     }
                 }
@@ -741,6 +722,12 @@
             $('#modal-pagination-container').html(html);
         }
 
+        // 修改问题
+        function editIssue(id) {
+            console.log('修改问题:', id);
+            // 这里添加修改逻辑
+        }
+
         // 删除单个问题
         function deleteIssue(id) {
             const result = showConfirm({
@@ -752,7 +739,7 @@
             }).then(result => {
                 if (result) {
                     $.ajax({
-                        url: "{% url 'web:schedule_job' pid=request.proid %}",
+                        url: "{% url 'web:schedule_job' %}",
                         type: 'DELETE',
                         contentType: 'application/json',
                         data: JSON.stringify({id: id}),
@@ -769,38 +756,26 @@
             });
         }
 
-        // 绑定新增/修改提交事件
+        // 绑定新增提交事件
         function bindAddSubmit() {
             $('#btnAddSubmit').click(function () {
                 $("#addForm").find('.error-msg').empty();
-
-                var taskId = $('#edit_task_id').val();
-                var url = "{% url 'web:schedule_job' pid=request.proid %}";
-                var method = 'POST';
-                var data = $('#addForm').serialize();
-
-                // 如果是修改，使用PUT请求
-                if (taskId) {
-                    method = 'POST';
-                    // 对于PUT请求，可能需要特殊处理数据格式
-                    data = $('#addForm').serialize();
-                }
-
                 $.ajax({
-                    url: url,
-                    type: method,
-                    data: data,
+                    url: "{% url 'web:schedule_job' %}",
+                    type: "POST",
+                    data: $('#addForm').serialize(),
                     dataType: "JSON",
                     success: function (res) {
                         if (res.status) {
-                            showSuccess(taskId ? '修改成功' : '新建成功');
+                            showSuccess()
                             $('#addModal').modal('hide');
                             loadIssues(currentPage);
-                            setCreateMode(); // 重置为新建模式
+                            $('#addForm')[0].reset();
                         } else {
                             $.each(res.errors_or_data, function (k, v) {
+                                console.log(k, v)
                                 $('#id_' + k).next('.error-msg').text(v[0]);
-                            });
+                            })
                         }
                     },
                     error: function () {
@@ -824,6 +799,14 @@
             });
         }
 
+        function initSelect2() {
+            $('.select2').select2({}).on('select2:select', function (e) {
+                location.href = e.params.data.id;
+            }).on('select2:unselect', function (e) {
+                location.href = e.params.data.id;
+            });
+        }
+
         // 启用 / 禁用
         function operate_enable(id, flag) {
             const result = showConfirm({
@@ -835,7 +818,7 @@
             }).then(result => {
                 if (result) {
                     $.ajax({
-                        url: "{% url 'web:schedule_job' pid=request.proid %}",
+                        url: "{% url 'web:schedule_job' %}",
                         type: 'PATCH',
                         data: {
                             'id': id,

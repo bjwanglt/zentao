@@ -8,8 +8,44 @@
     <link rel="stylesheet" href="{% static 'plugins/editor-md/css/editormd.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css' %}">
     <link rel="stylesheet" href="{% static 'plugins/bootstrap-select/css/bootstrap-select.min.css' %}">
-    <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css"/>
     <style>
+
+        .status-tag {
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 新建 - 蓝色渐变 */
+        .status-1 {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: 1px solid #2980b9;
+        }
+
+        /* 处理中 - 橙色渐变 */
+        .status-2 {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border: 1px solid #e67e22;
+        }
+
+        /* 已解决 - 绿色渐变 */
+        .status-3 {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            border: 1px solid #229954;
+        }
+
+        .editormd-preview-container img {
+            cursor: zoom-in;
+        }
+
         .issues-list .number {
             width: 100px;
             text-align: right;
@@ -93,6 +129,7 @@
                                 {% endfor %}
                             </div>
                         </div>
+                        <hr>
                     {% endfor %}
 
                 </div>
@@ -122,12 +159,12 @@
                                     <a href="{% url 'web:issue_detail' pid=request.proid issue_id=item.id %}">{{ item.subject }}</a>
                                 </div>
                                 <div class="tags">
-                                    <span class="type">
-                                        Bug
-                                    </span>
-                                    <span style="width: 70px;">
-                                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    <span class="status-tag status-{{ item.status }}">
                                         {{ item.get_status_display }}
+                                    </span>
+                                    <span style="width: 90px;">
+                                        <i class="fa fa-user-o" aria-hidden="true"></i>
+                                        {{ item.creator.username }}
                                     </span>
                                     {% if item.assign %}
                                         <span style="width: 90px;">
@@ -140,12 +177,6 @@
                                             <span style="color: rgba(128,128,128,0.66)">暂未指派</span>
                                         </span>
                                     {% endif %}
-
-                                    <span style="width: 90px;">
-                                        <i class="fa fa-user-o" aria-hidden="true"></i>
-                                        {{ item.creator.username }}
-                                    </span>
-
                                     {% if item.create_datetime %}
                                         <span><i class="fa fa-calendar"
                                                  aria-hidden="true"></i> {{ item.create_datetime }} 创建</span>
@@ -202,42 +233,37 @@
                                 <div class="error-msg"></div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="{{ form.module.id_for_label }}"
-                                   class="col-md-2 control-label">{{ form.module.label }}</label>
-                            <div class="col-md-10">
-                                <div>
-                                    <div>
-                                        {{ form.module }}
-                                    </div>
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="error-msg"></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="{{ form.desc.id_for_label }}"
-                                   class="col-md-2 control-label">{{ form.desc.label }}</label>
-                            <div class="col-md-10">
-                                <div>
-                                    <div id="editor">
-                                        {{ form.desc }}
-                                    </div>
 
+                        <div class="form-group clearfix">
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">项目版本</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {{ form.version }}
+                                    </div>
                                     <div class="error-msg"></div>
                                 </div>
-                                <div class="error-msg"></div>
+                            </div>
+
+                            <div class="col-md-6 pd-0">
+                                <label for="inputPassword3" class="col-md-4 control-label">需求</label>
+                                <div class="col-md-8">
+                                    <div>
+                                        {#                                        {{ form.demand }}#}
+                                        <select id="id_demand" class="select2 form-control" name="demand"></select>
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
                             </div>
                         </div>
 
                         <div class="form-group clearfix">
-
                             <div class="col-md-6 pd-0">
-                                <label for="{{ form.status.id_for_label }}"
-                                       class="col-md-4 control-label">{{ form.status.label }}</label>
-                                <div class="col-md-8 clearfix">
+                                <label for=" {{ form.assign.id_for_label }}"
+                                       class="col-md-4 control-label">{{ form.assign.label }}</label>
+                                <div class="col-md-8">
                                     <div>
-                                        {{ form.status }}
+                                        {{ form.assign }}
                                     </div>
                                     <div class="error-msg"></div>
 
@@ -256,25 +282,34 @@
                             </div>
                         </div>
 
-                        <div class="form-group clearfix">
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label">指派给</label>
-                                <div class="col-md-8">
-                                    {{ form.assign }}
+                        <div class="form-group">
+                            <label for="{{ form.desc.id_for_label }}"
+                                   class="col-md-2 control-label">{{ form.desc.label }}</label>
+                            <div class="col-md-10">
+                                <div>
+                                    <div id="editor">
+                                        {{ form.desc }}
+                                    </div>
+
                                     <div class="error-msg"></div>
                                 </div>
+                                <div class="error-msg"></div>
                             </div>
-
+                        </div>
+                        <div class="form-group clearfix">
                             <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label">关注者</label>
-                                <div class="col-md-8">
-
-                                    {{ form.attention }}
-
+                                {#                                <label for="{{ form.status.id_for_label }}"#}
+                                {#                                       class="col-md-4 control-label">{{ form.status.label }}</label>#}
+                                <div class="col-md-8 clearfix">
+                                    <div>
+                                        {{ form.status }}
+                                    </div>
                                     <div class="error-msg"></div>
+
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="form-group clearfix">
                             <div class="col-md-6 pd-0">
@@ -306,28 +341,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group clearfix">
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label">模式</label>
-                                <div class="col-md-8">
-                                    <div>
-                                        {{ form.mode }}
-                                    </div>
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 pd-0">
-                                <label for="inputPassword3" class="col-md-4 control-label"> 父问题</label>
-                                <div class="col-md-8">
-
-                                    {{ form.parent }}
-
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-                        </div>
-
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -395,16 +408,125 @@
     <script src="{% static 'plugins/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-select/js/bootstrap-select.min.js' %}"></script>
     <script src="{% static 'plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
-    <script src="{% static 'plugins/select2/js/select2.min.js' %}"></script>
     <script src="{% static 'plugins/select2/js/i18n/zh-CN.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
 
     <script>
         $(function () {
             initDatePicker()
-            bindBootStrapShownEvent()
             bindAddSubmit();
-            initSelect2()
             bindClickCheckFilter()
+
+            const $form = $('#addModal').find('form')[0];
+            if ($form) {
+                $form.reset()
+                $('.error-msg').text('');
+                $('.select2').val('').trigger('change');
+            }
+        })
+
+        function initEditorImageZoom() {
+            // 添加这行：配置Lightbox
+            lightbox.option({
+                'resizeDuration': 200,
+                'wrapAround': true,
+                'imageFadeDuration': 300,
+                'fadeDuration': 200,
+                'positionFromTop': 100,
+                'showImageNumberLabel': true,
+                'fitImagesInViewport': true,
+                'maxWidth': 1200,
+                'maxHeight': 800
+            });
+
+            function setupImageClick() {
+                // 查找编辑器中的所有图片
+                const $images = $('.editormd-preview-container img');
+
+                $images.each(function () {
+                    const $img = $(this);
+                    const src = $img.attr('src');
+
+                    if (src && !$img.parent().is('a[data-lightbox]')) {
+                        // 包装图片为可点击链接
+                        $img.wrap('<a href="' + src + '" data-lightbox="editor-images"></a>');
+                    }
+                });
+            }
+
+            // 立即执行一次
+            setupImageClick();
+
+            // 每2秒检查一次（因为编辑器内容可能异步加载）
+            const intervalId = setInterval(setupImageClick, 2000);
+
+            // 8秒后停止检查
+            setTimeout(() => {
+                clearInterval(intervalId);
+            }, 8000);
+        }
+
+
+        $('input').click(function () {
+            $(this).parent().next('div').text('')
+        })
+
+        $('select').change(function () {
+            $(this).parent().next('div').text('')
+        })
+
+        $('#editor').click(function () {
+            $(this).next('div.error-msg').text('')
+        })
+
+        $('#id_version').change(function () {
+            const version_id = $(this).val()
+            if (version_id) {
+                $('#id_demand').html('')
+                $.ajax({
+                    url: '{% url "web:demand" pid=request.proid %}',
+                    type: 'GET',
+                    data: {
+                        version: version_id
+                    },
+                    dataType: 'JSON',
+                    success: function (res) {
+                        if (res.status) {
+                            console.log(res.errors_or_data.datas)
+                            $('#id_demand').html('')
+                            $.each(res.errors_or_data.datas, function (idx, obj) {
+                                $('#id_demand').append(`<option value="${obj.id}">${obj.demand_name}</option>`)
+                            })
+                            $('#id_version').parent().next('div').text('')
+                            $('#id_demand').parent().next('div').text('')
+                        }
+                    }
+                })
+            }
+        })
+
+        let editor = null;
+
+
+        $('#addModal').on('hidden.bs.modal', function () {
+            // 模态框关闭后清空表单
+            const $form = $(this).find('form')[0];
+            if ($form) {
+                $form.reset()
+                $('.error-msg').text('');
+                $('.select2').val('').trigger('change');
+
+            }
+        });
+
+
+        $('#addModal').on('shown.bs.modal', function (event) {
+            // 对话框弹出时，内容触发。
+            initEditorMd();
+            if (editor) {
+                editor.setMarkdown('');
+            }
+            $('#id_demand').html('')
         })
 
         $('#inviteModal').on('hidden.bs.modal', function () {
@@ -423,7 +545,14 @@
             const textInput = $('#inviteUrl')[0]; // document.getElementById('inviteUrl')
             textInput.select();
             document.execCommand("Copy");
-            alert('复制成功，请提示成员登录系统后再访问邀请链接');
+            $('#inviteModal').modal('hide');
+            showConfirm({
+                title: '复制成功',
+                message: '请提示成员登录系统后再访问邀请链接',
+                confirmText: '确认',
+                cancelText: '取消',
+                type: 'success'
+            })
         }
 
         function get_invite_url() {
@@ -450,15 +579,6 @@
             });
         }
 
-        function initSelect2() {
-            $('.select2').select2({}).on('select2:select', function (e) {
-                // 选中某一项触发
-                location.href = e.params.data.id;
-            }).on('select2:unselect', function (e) {
-                // 移除某一项触发
-                location.href = e.params.data.id;
-            });
-        }
 
         function initDatePicker() {
             $('#id_start_date,#id_end_date').datepicker({
@@ -469,21 +589,19 @@
             });
         }
 
-        function bindBootStrapShownEvent() {
-            $('#addModal').on('shown.bs.modal', function (event) {
-                // 对话框弹出时，内容触发。
-                initEditorMd();
-            })
-        }
 
         function initEditorMd() {
-            editormd('editor', {
+            if (editor) return;
+            editor = editormd('editor', {
                 placeholder: "请输入内容",
                 height: 300,
                 path: "{% static 'plugins/editor-md/lib/' %}",
                 imageUpload: true,
                 imageFormats: ["jpg", 'jpeg', 'png', 'gif'],
                 imageUploadURL: "/account/manage/{{ request.proid }}/wiki/upload/?folder=bug",
+                onload: function () {
+                    setTimeout(initEditorImageZoom, 500);
+                },
             })
         }
 
@@ -498,9 +616,18 @@
                     dataType: "JSON",
                     success: function (res) {
                         if (res.status) {
-                            // location.href = location.href;
-                            alert('添加成功')
-                            window.location.reload()
+                            $('#addModal').modal('hide');
+                            const result = showConfirm({
+                                title: '提交成功',
+                                message: '',
+                                confirmText: '确认',
+                                cancelText: '',
+                                type: 'success'
+                            }).then(result => {
+                                if (result) {
+                                    window.location.reload()
+                                }
+                            })
                         } else {
                             // 错误信息
                             $.each(res.errors_or_data, function (k, v) {

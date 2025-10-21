@@ -13,11 +13,11 @@ from django_celery_beat.models import PeriodicTask
 from utils.http_response import SysHttpResponse
 
 
-def to_schedule_job(request: HttpRequest):
+def to_schedule_job(request: HttpRequest, pid):
     return render(request, 'web/schedule_job/schedule_job.html', dict(form=job_form(request=request)))
 
 
-def schedule_job_retry(request: HttpRequest):
+def schedule_job_retry(request: HttpRequest, pid):
     task_id = request.POST.get('task_id', '')
     task_name = request.POST.get('task_name', '')
     res = None
@@ -36,7 +36,7 @@ def schedule_job_retry(request: HttpRequest):
     return JsonResponse(sys.get_dict())
 
 
-def schedule_job_result(request: HttpRequest):
+def schedule_job_result(request: HttpRequest, pid):
     page = request.GET.get('page', 1)
     periodic_task_name = request.GET.get('periodic_task_name', '')
     queryset = TaskResult.objects.filter(periodic_task_name=periodic_task_name).values(
@@ -46,19 +46,22 @@ def schedule_job_result(request: HttpRequest):
     return JsonResponse(res.get_dict())
 
 
-def schedule_job(request: HttpRequest):
+def schedule_job(request: HttpRequest, pid):
     method = request.method
     if method == 'GET':
         print(request.GET)
         page = request.GET.get('page', 1)
         name = request.GET.get('name', '')
+        task_id = request.GET.get('task_id', '')
         q = Q()
         q.connector = 'AND'
         if name:
             q.children.append(('name__contains', name))
+        if task_id:
+            q.children.append(('id', task_id))
         queryset = PeriodicTask.objects.exclude(name__startswith='celery.').select_related('interval', 'crontab') \
             .values('name', 'args', 'id', 'crontab__hour', 'crontab__minute', 'interval__every', 'interval__period',
-                    'enabled').filter(q).order_by('-id')
+                    'enabled', 'task', 'crontab__hour', 'crontab__minute').filter(q).order_by('-id')
         for i in queryset:
             i['args'] = ';'.join(json.loads(i['args'])[0])
         res = get_pagination(queryset, page)
@@ -71,10 +74,16 @@ def schedule_job(request: HttpRequest):
             form.cleaned_data.pop('scheduler_hour')
             form.cleaned_data.pop('scheduler_minute')
             form.cleaned_data.pop('project_id')
+            instance_id = form.cleaned_data.get('id', '')
             try:
-                PeriodicTask.objects.create(
-                    **form.cleaned_data, enabled=1
-                )
+                if not instance_id:
+                    PeriodicTask.objects.create(
+                        **form.cleaned_data, enabled=1
+                    )
+                else:
+                    PeriodicTask.objects.filter(id=instance_id).update(
+                        **form.cleaned_data
+                    )
                 res.status = True
             except Exception as e:
                 res.status = False
@@ -84,6 +93,7 @@ def schedule_job(request: HttpRequest):
         else:
             res.status = False
             res.errors_or_data = form.errors
+            print(f'{form.errors=}')
             return JsonResponse(res.get_dict())
     if method == 'PATCH':
         res = SysHttpResponse()

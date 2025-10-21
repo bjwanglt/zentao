@@ -3,11 +3,12 @@ import datetime
 
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.db.models import Count, F, Case, Value, CharField, When
+from django.db.models import Count, F, Case, Value, CharField, When, Q
 from django.http.request import HttpRequest
 
 from web import models
 from utils.http_response import SysHttpResponse
+from web.models import ProjectDemand, ProjectVersion
 
 
 def statistics(request: HttpRequest, pid):
@@ -15,15 +16,26 @@ def statistics(request: HttpRequest, pid):
     end_str = request.GET.get('end')
     data_type = request.GET.get('data_type')
     if start_str and end_str:
+        version = request.GET.get('version','')
+        demand = request.GET.get('demand','')
+        q = Q()
+        q.connector = 'AND'
+        if version:
+            q.children.append(('version_id', version))
+        if demand:
+            q.children.append(('demand_id', demand))
         sys = SysHttpResponse()
         if data_type == 'priority':
             status_dict = dict(models.Issues.status_choices)
             data = list(
-                models.Issues.objects.filter(
+                models.Issues.objects
+                .filter(
                     project_id=pid,
                     create_datetime__gte=datetime.datetime.strptime(start_str, '%Y-%m-%d'),
                     create_datetime__lt=datetime.datetime.strptime(end_str, '%Y-%m-%d'),
-                ).annotate(name_val=F('status')).values('name_val').annotate(y=Count('*'))
+                )
+                .filter(q)
+                .annotate(name_val=F('status')).values('name_val').annotate(y=Count('*'))
             )
             for d in data:
                 d.update(dict(name=status_dict.get(d.get('name_val'))))
@@ -38,6 +50,7 @@ def statistics(request: HttpRequest, pid):
                     create_datetime__gte=datetime.datetime.strptime(start_str, '%Y-%m-%d'),
                     create_datetime__lt=datetime.datetime.strptime(end_str, '%Y-%m-%d'),
                 )
+                .filter(q)
                 .annotate(
                     status_display=Case(
                         When(status=1, then=Value('新建')),
@@ -74,4 +87,11 @@ def statistics(request: HttpRequest, pid):
             sys.errors_or_data = dict(categories=categories, series=series)
             return JsonResponse(sys.get_dict())
     else:
-        return render(request, 'web/statistics/statistics.html', dict())
+        # 传递 版本/需求 下拉选数值
+        demands = list(ProjectDemand.objects
+                       .select_related('version')
+                       .filter(version__project_id=36))
+        versions = list(ProjectVersion.objects.filter(project_id=36))
+        optioin_version = [dict(id=version.id, name=version.version) for version in versions]
+        optioin_demand = [dict(id=demand.id, name=demand.demand_name, version=demand.version_id) for demand in demands]
+        return render(request, 'web/statistics/statistics.html', dict(optioin_version=optioin_version, optioin_demand=optioin_demand))

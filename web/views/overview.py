@@ -1,6 +1,7 @@
 import datetime
+from collections import defaultdict
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Value, F
@@ -10,6 +11,7 @@ from django.db.models.functions import Upper, Substr
 
 from web import models
 from utils.http_response import SysHttpResponse
+from web.models import ProjectDemand, ProjectVersion
 
 
 def format_user_space(size):
@@ -26,9 +28,25 @@ def format_user_space(size):
 
 def over_view(request: HttpRequest, pid):
     data_type = request.GET.get('data_type')
+    # 传递 版本/需求 下拉选数值
+    demands = list(ProjectDemand.objects
+                   .select_related('version')
+                   .filter(version__project_id=36))
+    versions = list(ProjectVersion.objects.filter(project_id=36))
+    optioin_version = [dict(id=version.id, name=version.version) for version in versions]
+    optioin_demand = [dict(id=demand.id, name=demand.demand_name, version=demand.version_id) for demand in demands]
     if not data_type:
-        return render(request, 'web/overview/dashboard.html', dict())
+        return render(request, 'web/overview/dashboard.html',
+                      dict(optioin_version=optioin_version, optioin_demand=optioin_demand))
     sys = SysHttpResponse()
+    filter_demand = request.GET.get('demand','')
+    filter_version = request.GET.get('version','')
+    q = Q()
+    q.connector = 'AND'
+    if filter_version:
+        q.children.append(('version_id', filter_version))
+    if filter_demand:
+        q.children.append(('demand_id', filter_demand))
     if data_type == 'detail_data':
         # 项目详情
         project_obj: models.Project = models.Project.objects.filter(id=pid).first()
@@ -48,7 +66,9 @@ def over_view(request: HttpRequest, pid):
         # 项目最新动态  项目指派 + 问题修改
         # # 指派数据
         assign_data = list(
-            models.Issues.objects.exclude(assign_id=None)
+            models.Issues.objects
+            .exclude(assign_id=None)
+            .filter(project_id=pid)
             .annotate(type=Value(1), create_time=F('create_datetime'),
                       creator_initial=Upper(Substr('creator__username', 1, 1)))
             .values('type', 'creator__username', 'assign__username', 'id', 'create_time', 'subject', 'creator_initial',
@@ -70,7 +90,7 @@ def over_view(request: HttpRequest, pid):
         sys.errors_or_data = all_data
     if data_type == 'issue_group':
         status_dict = dict(models.Issues.status_choices)
-        data = list(models.Issues.objects.filter(project_id=pid).values('status').annotate(num=Count('*')))
+        data = list(models.Issues.objects.filter(project_id=pid).filter(q).values('status').annotate(num=Count('*')))
         for d in data:
             d.update(dict(status_text=status_dict.get(d.get('status')), project_id=pid))
         sys.status = True
@@ -85,9 +105,12 @@ def over_view(request: HttpRequest, pid):
         sys.errors_or_data = dict(data_creater=data_creater, data_joiner=data_joiner)
     if data_type == 'trend':
         pre_data = list(
-            models.Issues.objects.filter(project_id=pid)
+            models.Issues.objects
+            .filter(project_id=pid)
+            .filter(q)
             .annotate(create_date=RawSQL('date_format(create_datetime,"%%Y-%%m-%%d")', []))
-            .values('create_date').annotate(num=Count('*')).order_by('create_date')
+            .values('create_date').annotate(num=Count('*'))
+            .order_by('create_date')
         )
         for d in pre_data:
             d.update(dict(create_date=datetime.datetime.strptime(d.get('create_date'), '%Y-%m-%d').timestamp() * 1000))

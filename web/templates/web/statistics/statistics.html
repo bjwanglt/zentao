@@ -2,14 +2,112 @@
 {% load static %}
 {% block css %}
     <link rel="stylesheet" href="{% static 'plugins/daterangepicker/daterangepicker.css' %}">
+    <style>
+        /* 新增：开关样式 */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+
+        .switch-label {
+            font-size: 12px;
+            color: #666;
+            margin-right: 8px;
+            white-space: nowrap;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #8feb7c;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* 新增：筛选控件样式 */
+        .panel-filter {
+            display: inline-flex;
+            gap: 10px;
+            margin-left: 15px;
+            align-items: center;
+        }
+
+        .filter-select {
+            font-size: 12px;
+            padding: 4px 8px;
+            height: 28px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            min-width: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: #666;
+            margin-right: 2px;
+            white-space: nowrap;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
     <div class="container-fluid" style="margin-top: 20px;">
-        <div>
+        <div style="display: flex; align-items: center;">
             <div class="input-group" style="width: 300px;">
                 <span class="input-group-addon">BUG创建时间</span>
                 <input id="rangePicker" type="text" class="form-control" style="width: 101%">
+            </div>
+            <div class="switch-container">
+                <span class="switch-label" style="font-size: 14px;">联动刷新</span>
+                <label class="switch">
+                    <input type="checkbox" id="includeSubVersion">
+                    <span class="slider"></span>
+                </label>
             </div>
         </div>
 
@@ -17,9 +115,24 @@
             <div class="col-md-8">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-bar-chart" aria-hidden="true"></i> 人员工作进度
-                        <i class="fa fa-refresh panel-refresh pull-right"
-                           style="cursor:pointer;" title="刷新" id="refresh_projectUser"></i>
+                        <i class="fa fa-bar-chart" aria-hidden="true"></i>
+                        人员工作进度
+                        <div class="pull-right" style="display: flex; align-items: center; gap: 10px;">
+                            <div class="panel-filter">
+                                <span class="filter-label">版本:</span>
+                                <select class="filter-select" id="projectUserVersionFilter">
+                                    <option value="">全部版本</option>
+                                </select>
+                                <span class="filter-label">需求:</span>
+                                <select class="filter-select" id="projectUserDemandFilter">
+                                    <option value="">全部需求</option>
+                                </select>
+                            </div>
+                            <i class="fa fa-refresh panel-refresh pull-right"
+                               style="cursor:pointer;" title="刷新" id="refresh_projectUser"></i>
+                        </div>
+
+
                     </div>
                     <div class="panel-body">
                         <div id="projectUser" style="height: 300px;"></div>
@@ -30,9 +143,24 @@
             <div class="col-md-4">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <i class="fa fa-pie-chart" aria-hidden="true"></i> 优先级统计
-                        <i class="fa fa-refresh panel-refresh pull-right"
-                           style="cursor:pointer;" title="刷新" id="refresh_priority"></i>
+                        <i class="fa fa-pie-chart" aria-hidden="true"></i>
+                        优先级统计
+                        <div class="pull-right" style="display: flex; align-items: center; gap: 10px;">
+                            <div class="panel-filter">
+                                <span class="filter-label">版本:</span>
+                                <select class="filter-select" id="priorityVersionFilter">
+                                    <option value="">全部版本</option>
+                                </select>
+                                <span class="filter-label">需求:</span>
+                                <select class="filter-select" id="priorityDemandFilter">
+                                    <option value="">全部需求</option>
+                                </select>
+                            </div>
+                            <i class="fa fa-refresh panel-refresh pull-right"
+                               style="cursor:pointer;" title="刷新" id="refresh_priority"></i>
+                        </div>
+
+
                     </div>
                     <div class="panel-body">
                         <div id="priority" style="height: 300px;"></div>
@@ -51,13 +179,93 @@
     <script src="{% static 'plugins/highcharts/highcharts.js' %}"></script>
 
     <script>
-        const API_URL = "{% url 'web:statistics' pid=request.proid%}";
         $(function () {
+            window.link_flag = localStorage.getItem('link_refresh_flag') === 'true';
             bind_refresh()
             initDateRangePicker();
             priority(moment().startOf('year').format('YYYY-MM-DD'), moment().add(1, 'days').format('YYYY-MM-DD'));
             projectUser(moment().startOf('year').format('YYYY-MM-DD'), moment().add(1, 'days').format('YYYY-MM-DD'));
         });
+
+        init_select()
+
+        $('#includeSubVersion').change(function () {
+            window.link_flag = $(this).is(':checked');
+            localStorage.setItem('link_refresh_flag', window.link_flag);
+        });
+
+        function init_version(dom_id, sources){
+            $(`#${dom_id}`).html('')
+            $(`#${dom_id}`).append(
+                `<option value="">全部版本</option>`
+            )
+            for (const version of sources) {
+                $(`#${dom_id}`).append(
+                    `<option value="${version.id}">${version.name}</option>`
+                )
+            }
+        }
+
+        function bind_demand_change(demand_dom){
+            $(`#${demand_dom}`).change(function () {
+                if(window.link_flag){
+                    const n_ddom = demand_dom === 'priorityDemandFilter' ?'projectUserDemandFilter':'priorityDemandFilter'
+                    $(`#${n_ddom}`).val($(`#${demand_dom}`).val())
+                }
+            })
+        }
+
+        function init_demand(demand_dom, sources, current_version){
+            for (const demand of sources) {
+                    if (String(demand.version) === String(current_version)) {
+                        $(`#${demand_dom}`).append(
+                            `<option value="${demand.id}">${demand.name}</option>`
+                        )
+                    }
+                }
+        }
+
+        function bind_version_change(version_dom, demand_dom, sources){
+            // projectUserVersionFilter  projectUserDemandFilter
+            $(`#${version_dom}`).change(function () {
+                const current_version = $(this).val()
+                $(`#${demand_dom}`).html('')
+                $(`#${demand_dom}`).append(
+                    `<option value="">全部需求</option>`
+                )
+                init_demand(demand_dom, sources, current_version)
+
+                if(window.link_flag){
+                    const n_vdom = version_dom === 'projectUserVersionFilter' ?'priorityVersionFilter':'projectUserVersionFilter'
+                    const n_ddom = demand_dom === 'priorityDemandFilter' ?'projectUserDemandFilter':'priorityDemandFilter'
+
+                    $(`#${n_vdom}`).val($(this).val())
+
+                    $(`#${n_ddom}`).html('')
+                    $(`#${n_ddom}`).append(
+                        `<option value="">全部需求</option>`
+                    )
+                    init_demand(n_ddom, sources, current_version)
+                }
+            })
+        }
+
+        function init_select() {
+            // 版本下拉选 - 趋势
+            const versions = {{ optioin_version|safe }};
+            init_version('projectUserVersionFilter', versions)
+            // 版本下拉选 - 问题
+            init_version('priorityVersionFilter', versions)
+
+            const demands = {{ optioin_demand|safe }};
+            bind_version_change('projectUserVersionFilter','projectUserDemandFilter', demands)
+            bind_version_change('priorityVersionFilter','priorityDemandFilter', demands)
+
+            bind_demand_change('priorityDemandFilter')
+            bind_demand_change('projectUserDemandFilter')
+        }
+
+        const API_URL = "{% url 'web:statistics' pid=request.proid%}";
 
         function initDateRangePicker() {
             var options = {
@@ -96,7 +304,7 @@
             });
         }
 
-        function priority(start, end) {
+        function priority(start, end, flag=true) {
             let config = {
                 chart: {
                     type: 'pie'
@@ -129,19 +337,27 @@
             $.ajax({
                 url: API_URL,
                 type: "GET",
-                data: {start: start, end: end, data_type: 'priority'},
+                data: {
+                    start: start,
+                    end: end,
+                    data_type: 'priority',
+                    version: $('#priorityVersionFilter').val(),
+                    demand: $('#priorityDemandFilter').val()
+                },
                 dataType: "JSON",
                 success: function (res) {
                     if (res.status) {
                         config.series[0].data = res.errors_or_data;
                         Highcharts.chart('priority', config);
+                        if(flag && window.link_flag){
+                            projectUser(start, end, false);
+                        }
                     }
-
                 }
             })
         }
 
-        function projectUser(start, end) {
+        function projectUser(start, end, flag=true) {
             let config = {
                 chart: {
                     type: 'column'
@@ -195,13 +411,21 @@
             $.ajax({
                 url: API_URL,
                 type: "GET",
-                data: {start: start, end: end, data_type: 'projess'},
+                data: {
+                    start: start,
+                    end: end,
+                    data_type: 'projess',
+                    version: $('#projectUserVersionFilter').val(),
+                    demand: $('#projectUserDemandFilter').val()
+                },
                 dataType: "JSON",
                 success: function (res) {
                     config.xAxis.categories = res.errors_or_data.categories;
                     config.series = res.errors_or_data.series;
                     Highcharts.chart('projectUser', config);
-
+                    if(flag && window.link_flag){
+                        priority(start, end, false);
+                    }
                 }
             })
         }

@@ -7,19 +7,20 @@ def user_info_cache(user_id=None):
     redis_conn: Redis = get_redis_connection()
     if not redis_conn.set('user_info_cache_lock', 1, nx=True, ex=30):
         return
-    from web import models
     raw_sql = '''
             select
             	uu.id,
             	pp.project_num , # 项目个数
             	pp.project_member ,  # 项目参与人数
             	pp.per_file_size, # 单文件大小限制
-            	pp.project_space # 总空间大小
+            	pp.project_space, # 总空间大小
+            	uu.username
             from
             	user_info uu
             left join price_policy pp on
             	uu.price_policy_id = pp.id
-            ''' + f' where uu.id = {user_id}' if user_id else ''
+            ''' + (f' where uu.id = {user_id}' if user_id else '')
+    from web import models
     objs = models.UserInfo.objects.raw(raw_sql)
 
     pipe = redis_conn.pipeline()
@@ -29,6 +30,7 @@ def user_info_cache(user_id=None):
             'project_member': obj.project_member,
             'per_file_size': obj.per_file_size,
             'project_space': obj.project_space,
+            'username': obj.username,
         })
     pipe.execute()
     print('用户信息缓存完毕')

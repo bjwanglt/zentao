@@ -12,7 +12,8 @@ class OpeCacheUserInfo:
             pp.project_num ,
             pp.project_member ,
             pp.per_file_size,
-            pp.project_space
+            pp.project_space,
+            uu.username
         from
             user_info uu
         left join price_policy pp on
@@ -54,6 +55,7 @@ class OpeCacheUserInfo:
                 'project_member': obj.project_member,
                 'per_file_size': obj.per_file_size,
                 'project_space': obj.project_space,
+                'username': obj.username,
             })
         pipe.execute()
 

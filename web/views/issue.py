@@ -27,7 +27,7 @@ def issue(request: HttpRequest, pid):
         # 分页返回数据
         # # 前端参数处理
         quertdata_dict = dict(project_id=pid)
-        query_keys = ['status', 'priority']
+        query_keys = ['status', 'priority','creator_id','assign_id']
         for key in query_keys:
             vals = request.GET.getlist(key)
             if vals:
@@ -36,6 +36,12 @@ def issue(request: HttpRequest, pid):
         conditions = [
             CheckFilterCondition(request, '状态', 'status', models.Issues.status_choices),
             CheckFilterCondition(request, '优先级', 'priority', models.Issues.priority_choices),
+            CheckFilterCondition(request, '我创建的', 'creator_id', (
+                (request.userid, "我创建的"),
+            )),
+            CheckFilterCondition(request, '指派给我的', 'assign_id', (
+                (request.userid, "指派给我的"),
+            )),
         ]
         queryset = models.Issues.objects.select_related('creator', 'assign').order_by('-id').filter(**quertdata_dict)
         paginator = Paginator(queryset, settings.PAGE_SIZE)
@@ -54,6 +60,7 @@ def issue(request: HttpRequest, pid):
             form.save()
             res.status = True
         else:
+            print(form.errors)
             res.errors_or_data = form.errors
         return JsonResponse(res.get_dict())
 
@@ -61,7 +68,9 @@ def issue(request: HttpRequest, pid):
 def issue_detail(request: HttpRequest, pid, issue_id):
     instance = models.Issues.objects.filter(id=issue_id, project_id=pid).first()
     form = IssusForm(request, instance=instance)
-    return render(request, 'web/issue/issue_detail.html', dict(form=form, issue_id=issue_id))
+    # 当前用户是否是问题的创建者
+    is_creater = instance.creator_id == int(request.userid)
+    return render(request, 'web/issue/issue_detail.html', dict(form=form, issue_id=issue_id, is_creater=is_creater))
 
 
 def issue_replay(request: HttpRequest, pid, issue_id):
@@ -173,10 +182,14 @@ def get_edit_content(old: models.Issues, new: models.Issues):
 
 
 def issue_edit(request, pid, issue_id):
+    sys = SysHttpResponse()
     obj_old = models.Issues.objects.filter(id=issue_id).first()
+    if obj_old.status == 3:
+        sys.status = False
+        sys.errors_or_data = '当前问题状态为【已解决】，不可操作'
+        return JsonResponse(sys.get_dict())
     obj_old_copy = copy.deepcopy(obj_old)
     form = IssusForm(request, data=request.POST, instance=obj_old)
-    sys = SysHttpResponse()
     if form.is_valid():
         try:
             with transaction.atomic():

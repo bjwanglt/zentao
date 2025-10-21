@@ -100,6 +100,9 @@ class ProjectUser(models.Model):
     star = models.BooleanField(verbose_name='是否星标', default=False)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
 
+    def __str__(self):
+        return self.user_name
+
     class Meta:
         db_table = 'project_user'
 
@@ -155,11 +158,7 @@ class Issues(models.Model):
     status_choices = (
         (1, '新建'),
         (2, '处理中'),
-        (3, '已解决'),
-        (4, '已忽略'),
-        (5, '待反馈'),
-        (6, '已关闭'),
-        (7, '重新打开'),
+        (3, '已解决')
     )
     mode_choices = (
         (1, '公开模式'),
@@ -170,8 +169,12 @@ class Issues(models.Model):
                                     db_constraint=False, null=True, blank=True)
     module = models.ForeignKey(verbose_name='模块', to='Module', null=True, blank=True, db_constraint=False,
                                on_delete=models.DO_NOTHING)
-    subject = models.CharField(verbose_name='主题', max_length=80)
-    desc = models.TextField(verbose_name='问题描述')
+    version = models.ForeignKey(verbose_name='项目版本', to='ProjectVersion', db_constraint=False,
+                                on_delete=models.DO_NOTHING)
+    demand = models.ForeignKey(verbose_name='需求', to='ProjectDemand', db_constraint=False,
+                               on_delete=models.DO_NOTHING)
+    subject = models.CharField(verbose_name='问题简述', max_length=80)
+    desc = models.TextField(verbose_name='问题详情')
     priority = models.CharField(verbose_name='优先级', max_length=12, choices=priority_choices, default='danger')
     status = models.SmallIntegerField(verbose_name='状态', choices=status_choices, default=1)
     assign = models.ForeignKey(verbose_name='指派', to='UserInfo', related_name='task', null=True, blank=True,
@@ -180,7 +183,7 @@ class Issues(models.Model):
                                        through='IssueAttention')
     start_date = models.DateField(verbose_name='开始时间', null=True, blank=True)
     end_date = models.DateField(verbose_name='结束时间', null=True, blank=True)
-    mode = models.SmallIntegerField(verbose_name='模式', choices=mode_choices, default=1)
+    mode = models.SmallIntegerField(verbose_name='模式', choices=mode_choices, default=1, null=True,blank=True)
     parent = models.ForeignKey(verbose_name='关联问题', to='self', related_name='child', null=True, blank=True,
                                on_delete=models.SET_NULL)
     creator = models.ForeignKey(verbose_name='创建者', to='UserInfo', related_name='create_problems',
@@ -247,6 +250,30 @@ class IssuesReply(models.Model):
 
     class Meta:
         db_table = 'issue_replay'
+
+
+class ProjectVersion(models.Model):
+    project = models.ForeignKey(verbose_name='项目', db_constraint=False, to=Project, on_delete=models.DO_NOTHING)
+    version = models.CharField(verbose_name='迭代版本', max_length=10, unique=True)
+
+    def __str__(self):
+        return self.version
+
+    class Meta:
+        db_table = 'project_version'
+
+
+class ProjectDemand(models.Model):
+    version = models.ForeignKey(verbose_name='迭代版本', db_constraint=False, to=ProjectVersion,
+                                on_delete=models.DO_NOTHING)
+    demand_name = models.CharField(verbose_name='需求', max_length=30, unique=True)
+    demand_detail = models.CharField(verbose_name='需求详情', max_length=100)
+
+    def __str__(self):
+        return self.demand_name
+
+    class Meta:
+        db_table = 'project_demand'
 
 
 '''

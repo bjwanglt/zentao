@@ -22,13 +22,7 @@ def XXX(...):
 # 5 自动去所有注册app中寻找 Task 并注册到celery实例中
 app.autodiscover_tasks()
 
-
 # 扩展： celery的信号机制  [这是回调的方式之一，针对的是全部的任务，也可以通过为任务绑定基类，这样可以个性化]
-@signals.task_success.connect
-def print_task_scuuess(*args, **kwargs):
-    print(f'{args=}')
-    print(f'{kwargs=}')
-    print('-- task_scuuess --')
 
 
 # 6 本地启动测试

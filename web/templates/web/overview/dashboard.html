@@ -3,9 +3,8 @@
 {% load issue %}
 {% block css %}
     <style>
-
         #panel-dynamics .panel-body {
-            max-height: 350px; /* 或者你想要的高度 */
+            max-height: 350px;
             overflow-y: auto;
         }
 
@@ -65,6 +64,84 @@
             border-top: 0;
             border-bottom: 1px solid #ddd;
         }
+
+        /* 新增：筛选控件样式 */
+        .panel-filter {
+            display: inline-flex;
+            gap: 10px;
+            margin-left: 15px;
+            align-items: center;
+        }
+
+        .filter-select {
+            font-size: 12px;
+            padding: 4px 8px;
+            height: 28px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            min-width: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: #666;
+            margin-right: 2px;
+            white-space: nowrap;
+        }
+
+        .filter-btn {
+            padding: 4px 12px;
+            height: 28px;
+            font-size: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .filter-btn:active {
+            transform: translateY(0);
+        }
+
+        .panel-refresh {
+            transition: transform 0.5s ease;
+        }
+
+        .panel-refresh.fa-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .panel-filter {
+                flex-direction: column;
+                gap: 5px;
+                margin-left: 10px;
+            }
+        }
     </style>
 {% endblock %}
 
@@ -76,8 +153,18 @@
                     <div class="panel-heading">
                         <i class="fa fa-bar-chart" aria-hidden="true"></i>
                         新增问题趋势
-                        <i class="fa fa-refresh panel-refresh pull-right"
-                           style="cursor:pointer;" title="刷新" id="refresh_trend"></i>
+                        <div class="pull-right" style="display: flex; align-items: center; gap: 10px;">
+                            <div class="panel-filter">
+                                <span class="filter-label">版本:</span>
+                                <select class="filter-select" id="trendVersionFilter">
+                                </select>
+                                <span class="filter-label">需求:</span>
+                                <select class="filter-select" id="trendDemandFilter">
+                                </select>
+                            </div>
+                            <i class="fa fa-refresh panel-refresh" style="cursor:pointer;" title="刷新"
+                               id="refresh_trend"></i>
+                        </div>
                     </div>
                     <div class="panel-body">
                         <div id="chart" style="width:100%;min-height:200px"></div>
@@ -90,8 +177,26 @@
                             <div class="panel-heading">
                                 <i class="fa fa-quora" aria-hidden="true"></i>
                                 问题
-                                <i class="fa fa-refresh panel-refresh pull-right"
-                                   style="cursor:pointer;" title="刷新" id="refresh_issue_group"></i>
+                                <div class="pull-right" style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="panel-filter">
+                                        <span class="filter-label">版本:</span>
+                                        <select class="filter-select" id="issueVersionFilter">
+                                            <option value="">所有版本</option>
+                                            <option value="v1.0">v1.0</option>
+                                            <option value="v1.1">v1.1</option>
+                                            <option value="v2.0">v2.0</option>
+                                        </select>
+                                        <span class="filter-label">需求:</span>
+                                        <select class="filter-select" id="issueDemandFilter">
+                                            <option value="">所有需求</option>
+                                            <option value="demand1">用户管理</option>
+                                            <option value="demand2">权限系统</option>
+                                            <option value="demand3">报表功能</option>
+                                        </select>
+                                    </div>
+                                    <i class="fa fa-refresh panel-refresh" style="cursor:pointer;" title="刷新"
+                                       id="refresh_issue_group"></i>
+                                </div>
                             </div>
                             <div class="panel-body" id="panel-issue_group"></div>
                         </div>
@@ -101,8 +206,8 @@
                             <div class="panel-heading">
                                 <i class="fa fa-user" aria-hidden="true"></i>
                                 项目成员
-                                <i class="fa fa-refresh panel-refresh pull-right"
-                                   style="cursor:pointer;" title="刷新" id="refresh_members"></i>
+                                <i class="fa fa-refresh panel-refresh pull-right" style="cursor:pointer;" title="刷新"
+                                   id="refresh_members"></i>
                             </div>
                             <div class="panel-body user-item">
                                 <div class="col-sm-12 title">创建者</div>
@@ -120,8 +225,8 @@
                     <div class="panel-heading">
                         <i class="fa fa-cog title-icon"></i>
                         详细
-                        <i class="fa fa-refresh panel-refresh pull-right"
-                           style="cursor:pointer;" title="刷新" id="refresh_detail"></i>
+                        <i class="fa fa-refresh panel-refresh pull-right" style="cursor:pointer;" title="刷新"
+                           id="refresh_detail"></i>
                     </div>
                     <div class="panel-body">
                         <table class="table table-right">
@@ -131,13 +236,12 @@
                     </div>
                 </div>
 
-
                 <div class="panel panel-default" id="panel-dynamics">
                     <div class="panel-heading">
                         <i class="fa fa-list-ul" aria-hidden="true"></i>
                         动态
-                        <i class="fa fa-refresh panel-refresh pull-right"
-                           style="cursor:pointer;" title="刷新" id="refresh_dynamics"></i>
+                        <i class="fa fa-refresh panel-refresh pull-right" style="cursor:pointer;" title="刷新"
+                           id="refresh_dynamics"></i>
                     </div>
                     <div class="panel-body top-10">
                         <table class="table">
@@ -151,18 +255,19 @@
     </div>
 {% endblock %}
 
-
 {% block js %}
     <script src="{% static 'plugins/highcharts/highcharts.js' %}"></script>
     <script>
         $(function () {
+            // 初始化下拉选
+            init_select()
             bind_refresh()
             // 刷新详情数据
             refresh_detail_data()
             // 刷新动态
             refresh_dynamics()
             // 刷新问题分组
-            refresh_issue_group()
+            refreshIssueGroupData()
             // 刷新项目成员
             refresh_members()
             // 刷新问题趋势
@@ -172,27 +277,102 @@
                 }
             });
             initChart();
-
-
         })
 
-        function initChart() {
-            // chart
-            let config = {
-                title: {
-                    text: null   // 不显示标题
-                },
-                legend: {
-                    enabled: false // 关闭图例提示
-                },
-                credits: {
-                    enabled: false // 关闭版权信息
-                },
-                yAxis: {
-                    title: {
-                        text: '问题数量' // Y周文本提示
+        function init_select() {
+            const versions = {{ optioin_version|safe }}
+                // 版本下拉选 - 趋势
+                $('#trendVersionFilter').html('')
+            $('#trendVersionFilter').append(
+                `<option value="">全部版本</option>`
+            )
+            for (const version of versions) {
+                $('#trendVersionFilter').append(
+                    `<option value="${version.id}">${version.name}</option>`
+                )
+            }
+
+            // 版本下拉选 - 问题
+            $('#issueVersionFilter').html('')
+            $('#issueVersionFilter').append(
+                `<option value="">全部版本</option>`
+            )
+            for (const version of versions) {
+                $('#issueVersionFilter').append(
+                    `<option value="${version.id}">${version.name}</option>`
+                )
+            }
+
+            const demands = {{ optioin_demand|safe }}
+                $('#trendVersionFilter').change(function () {
+                    const current_version = $(this).val()
+                    $('#trendDemandFilter').html('')
+                    $('#trendDemandFilter').append(
+                        `<option value="">全部需求</option>`
+                    )
+                    for (const demand of demands) {
+                        console.log(demand)
+                        if (String(demand.version) === String(current_version)) {
+                            $('#trendDemandFilter').append(
+                                `<option value="${demand.id}">${demand.name}</option>`
+                            )
+                        }
                     }
-                },
+                })
+
+            $('#issueVersionFilter').change(function () {
+                const current_version = $(this).val()
+                $('#issueDemandFilter').html('')
+                $('#issueDemandFilter').append(
+                    `<option value="">全部需求</option>`
+                )
+                for (const demand of demands) {
+                    console.log(demand)
+                    if (String(demand.version) === String(current_version)) {
+                        $('#issueDemandFilter').append(
+                            `<option value="${demand.id}">${demand.name}</option>`
+                        )
+                    }
+                }
+            })
+
+            // 需求下拉选 - 趋势
+            $('#trendDemandFilter').html('')
+            $('#trendDemandFilter').append(
+                `<option value="">全部需求</option>`
+            )
+            // 需求下拉选 - 问题
+            $('#issueDemandFilter').html('')
+            $('#issueDemandFilter').append(
+                `<option value="">全部需求</option>`
+            )
+
+
+        }
+
+
+        // 筛选状态
+        let currentFilters = {
+            version: '',
+            demand: ''
+        };
+
+
+        // 旋转效果
+        function spinIcon($icon) {
+            if ($icon.hasClass('fa-spin')) return;
+            $icon.addClass('fa-spin');
+            setTimeout(() => {
+                $icon.removeClass('fa-spin');
+            }, 800);
+        }
+
+        function initChart() {
+            let config = {
+                title: {text: null},
+                legend: {enabled: false},
+                credits: {enabled: false},
+                yAxis: {title: {text: '问题数量'}},
                 xAxis: {
                     type: 'datetime',
                     tickInterval: 60 * 60 * 24 * 1000,
@@ -219,52 +399,83 @@
                         }
                     }
                 },
-                series: [{
-                    data: []
-                }]
+                series: [{data: []}]
             };
+            refreshTrendData(config);
+        }
+
+        // 刷新趋势数据（带筛选）
+        function refreshTrendData(config) {
+            if (!config) {
+                config = window.trendChart ? window.trendChart.options : null;
+            }
             $.ajax({
-                    url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=trend',
-                    type: "GET",
-                    dataType: "JSON",
-                    success: function (res) {
-                        if (res.status) {
-                            console.log(res.errors_or_data)
+                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=trend',
+                type: "GET",
+                dataType: "JSON",
+                data: {
+                    'version': $('#trendVersionFilter').val(),
+                    'demand': $('#trendDemandFilter').val(),
+                },
+                success: function (res) {
+                    if (res.status) {
+                        if (config) {
                             config.series[0].data = res.errors_or_data;
-                            let chart = Highcharts.chart('chart', config);
+                            if (window.trendChart) {
+                                window.trendChart.update(config);
+                            } else {
+                                window.trendChart = Highcharts.chart('chart', config);
+                            }
                         }
                     }
                 }
-            )
+            });
+        }
+
+        // 刷新问题分组数据（带筛选）
+        function refreshIssueGroupData() {
+            $.ajax({
+                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=issue_group',
+                type: 'GET',
+                dataType: 'JSON',
+                data: {
+                    'version': $('#issueVersionFilter').val(),
+                    'demand': $('#issueDemandFilter').val(),
+                },
+                success: function (res) {
+                    if (res.status) {
+                        const $tbody = $('#panel-issue_group');
+                        $tbody.empty();
+                        for (const item of res.errors_or_data) {
+                            $tbody.prepend(get_issue_tag(item));
+                        }
+                    } else {
+                        alert('【问题分组】数据加载失败')
+                    }
+                }
+            });
         }
 
         function bind_refresh() {
             $(document).on('click', '.panel-refresh', function () {
                 const $icon = $(this);
                 const id = $icon.attr('id')
-                if ($icon.hasClass('fa-spin')) return;  // 防止重复点击
-                $icon.addClass('fa-spin');
-                // 模拟刷新延时2秒
-                setTimeout(() => {
-                    $icon.removeClass('fa-spin');
-                }, 550);
+                spinIcon($icon);
+
                 if (id === 'refresh_detail') {
-                    // 刷新详情
                     refresh_detail_data()
                 }
                 if (id === 'refresh_dynamics') {
-                    // 刷新详情
                     refresh_dynamics()
                 }
                 if (id === 'refresh_issue_group') {
-                    // 数据问题分组
-                    refresh_issue_group()
+                    refreshIssueGroupData()
                 }
                 if (id === 'refresh_members') {
                     refresh_members()
                 }
                 if (id === 'refresh_trend') {
-                    initChart()
+                    refreshTrendData()
                 }
             });
         }
@@ -287,7 +498,7 @@
                             $joiner.prepend(get_members_joiner_tag(item));
                         }
                     } else {
-                        alert('【动态】数据加载失败')
+                        alert('【成员】数据加载失败')
                     }
                 }
             })
@@ -309,25 +520,6 @@
                     <div class="text">${item.user_name}</div>
                 </div>
             `)
-        }
-
-        function refresh_issue_group() {
-            $.ajax({
-                url: '{% url 'web:overview' pid=request.proid %}' + '?data_type=issue_group',
-                type: 'GET',
-                dataType: 'JSON',
-                success: function (res) {
-                    if (res.status) {
-                        const $tbody = $('#panel-issue_group');
-                        $tbody.empty();
-                        for (const item of res.errors_or_data) {
-                            $tbody.prepend(get_issue_tag(item));
-                        }
-                    } else {
-                        alert('【动态】数据加载失败')
-                    }
-                }
-            })
         }
 
         function get_issue_tag(item) {
@@ -441,7 +633,5 @@
                 </tr>
             `
         }
-
-
     </script>
 {% endblock %}

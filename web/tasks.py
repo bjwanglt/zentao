@@ -1,24 +1,10 @@
-import time
-
-from celery import shared_task, Task, Celery
+from celery import shared_task
 from django.core.mail import EmailMessage
-
-import eventlet
-
-
-class TaskWithCallback(Task):
-
-    def on_success(self, retval, task_id, args, kwargs):
-        pass
-
-    def on_retry(self, reason_exc, req_id, req_args, req_kwargs, einfo):
-        print(f'---------- TaskWithCallback  retry -------------')
-
 
 from celery.app.task import Task
 
 
-@shared_task(name="日报邮件", bind=True, autoretry_for=(Exception,), base=TaskWithCallback,
+@shared_task(name="项目进度_日报邮件", bind=True, autoretry_for=(Exception,),
              retry_kwargs=dict(max_retries=3, countdown=5, ))
 def send_report(self: Task, email_list, project_id):
     email = EmailMessage(
@@ -28,4 +14,4 @@ def send_report(self: Task, email_list, project_id):
         to=email_list
     )
     email.send()
-    print(f'>>>>>>>>>>  发送成功 {email_list=}  {project_id=}<<<<<<<<<<<<')
+    print(f'>>>>>>>>>>  发送成功 {email_list=}  {project_id=} <<<<<<<<<<<<')
