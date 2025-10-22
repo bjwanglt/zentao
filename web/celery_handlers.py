@@ -11,11 +11,3 @@ def set_periodic_name(sender=None, task_id=None, task=None, args=None, kwargs=No
             periodic_task_name=beat_info['periodic_task_name']
         )
 
-
-@task_retry.connect
-def handle_retry(sender=None, request=None, reason=None, einfo=None, **rest):
-    print(f'---------- handle_retry -------------')
-    print(f'{sender=}')
-    print(f'{request=}')
-    print(f'{reason=}')
-    print(f'{einfo=}')

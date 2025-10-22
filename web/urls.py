@@ -54,6 +54,7 @@ urlpatterns = [
         path('schedule_job/', schedule_job.schedule_job, name='schedule_job'),
         path('schedule_job_result/', schedule_job.schedule_job_result, name='schedule_job_result'),
         path('schedule_job_retry/', schedule_job.schedule_job_retry, name='schedule_job_retry'),
+        path('schedule_job_runonce/', schedule_job.schedule_job_runonce, name='schedule_job_runonce'),
         # 项目版本/需求维护
         path('to_version_demand/', version_demand.to_version_demand, name='to_version_demand'),
         path('version/', version_demand.version, name='version'),

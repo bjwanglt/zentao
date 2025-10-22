@@ -20,6 +20,7 @@ def to_schedule_job(request: HttpRequest, pid):
 def schedule_job_retry(request: HttpRequest, pid):
     task_id = request.POST.get('task_id', '')
     task_name = request.POST.get('task_name', '')
+    periodic_task_name = request.POST.get('periodic_task_name', '')
     res = None
     sys = SysHttpResponse(False, '参数有误')
     if not task_id:
@@ -31,16 +32,40 @@ def schedule_job_retry(request: HttpRequest, pid):
     args = args.replace("'", '"')
     args = json.loads(args)
     task = celery_app.tasks[task_name]
-    task.apply_async(args=args, headers={'django-celery-beat': {'periodic_task_name': 'ceshi7'}})
+    task.apply_async(args=args, headers={'django-celery-beat': {'periodic_task_name': periodic_task_name}})
     sys.status = True
     return JsonResponse(sys.get_dict())
+
+
+def schedule_job_runonce(request: HttpRequest, pid):
+    res = SysHttpResponse(False, '参数有误')
+    task_id = request.POST.get('task_id', '')
+    if not task_id:
+        return JsonResponse(res.get_dict())
+    obj = None
+    obj = PeriodicTask.objects.filter(id=int(task_id)).first()
+    if not obj:
+        return JsonResponse(res.get_dict())
+    try:
+        args = obj.args
+        args = args.replace("'", '"')
+        celery_app.autodiscover_tasks(force=True)
+        args = json.loads(args)
+        task = celery_app.tasks[obj.task]
+        task.apply_async(args=args, headers={'django-celery-beat': {'periodic_task_name': obj.name}})
+        res.status = True
+    except Exception as e:
+        res.status = False
+        res.errors_or_data = str(e)
+    finally:
+        return JsonResponse(res.get_dict())
 
 
 def schedule_job_result(request: HttpRequest, pid):
     page = request.GET.get('page', 1)
     periodic_task_name = request.GET.get('periodic_task_name', '')
     queryset = TaskResult.objects.filter(periodic_task_name=periodic_task_name).values(
-        'task_id', 'status', 'date_created', 'date_done', 'task_args', 'task_name', 'result'
+        'task_id', 'status', 'date_created', 'date_done', 'task_args', 'task_name', 'result', 'periodic_task_name'
     ).order_by('-date_created')
     res = get_pagination(queryset, page)
     return JsonResponse(res.get_dict())
