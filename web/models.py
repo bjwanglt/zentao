@@ -275,6 +275,7 @@ class ProjectDemand(models.Model):
 
     class Meta:
         db_table = 'project_demand'
+        unique_together = [['version','demand_name']]
 
 
 '''
