@@ -100,6 +100,7 @@ def manage_pro(request: HttpRequest):
                 )
                 res.status = True
         except Exception as e:
+            print(e)
             res.errors_or_data = dict(desc=[f'系统繁忙，请稍后重试'])
         finally:
             return JsonResponse(res.get_dict())

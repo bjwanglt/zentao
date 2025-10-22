@@ -254,13 +254,14 @@ class IssuesReply(models.Model):
 
 class ProjectVersion(models.Model):
     project = models.ForeignKey(verbose_name='项目', db_constraint=False, to=Project, on_delete=models.DO_NOTHING)
-    version = models.CharField(verbose_name='迭代版本', max_length=10, unique=True)
+    version = models.CharField(verbose_name='迭代版本', max_length=10)
 
     def __str__(self):
         return self.version
 
     class Meta:
         db_table = 'project_version'
+        unique_together = [['project','version']]
 
 
 class ProjectDemand(models.Model):

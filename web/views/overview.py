@@ -31,8 +31,8 @@ def over_view(request: HttpRequest, pid):
     # 传递 版本/需求 下拉选数值
     demands = list(ProjectDemand.objects
                    .select_related('version')
-                   .filter(version__project_id=36))
-    versions = list(ProjectVersion.objects.filter(project_id=36))
+                   .filter(version__project_id=int(pid)))
+    versions = list(ProjectVersion.objects.filter(project_id=int(pid)))
     optioin_version = [dict(id=version.id, name=version.version) for version in versions]
     optioin_demand = [dict(id=demand.id, name=demand.demand_name, version=demand.version_id) for demand in demands]
     if not data_type:
