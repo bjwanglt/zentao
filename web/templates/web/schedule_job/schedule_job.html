@@ -366,7 +366,7 @@
                                     <th>开始时间</th>
                                     <th>结束时间</th>
                                     <th>执行参数</th>
-                                    <th>失败重试</th>
+                                    <th>Retry</th>
                                 </tr>
                                 </thead>
                                 <tbody id="data-table-body">
@@ -397,6 +397,7 @@
         let currentTaskName = null;
         let currentDetailPage = 1;
 
+
         $(function () {
             loadIssues();
             bindBootStrapShownEvent();
@@ -405,6 +406,13 @@
 
             // 新增：模态框显示时初始化
             initModalEvents();
+
+            $('#filter_form input').on('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loadIssues(currentPage);
+                }
+            })
         });
 
         $('#filterBtn').click(function () {
