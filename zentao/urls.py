@@ -18,12 +18,15 @@ from django.http import JsonResponse
 from django.urls import path, include
 from django.shortcuts import redirect, reverse
 
+from web.views import account
+
 
 def to_login(request):
     return redirect(to=reverse('web:index'))
 
 
 urlpatterns = [
+    path('/', account.index, name='index'),
     path('admin/', admin.site.urls),
 
     # 测试用  可忽略
@@ -36,7 +39,6 @@ urlpatterns = [
     path('account/', include(('web.urls', 'web'), )),
 
 ]
-
 
 # def handler_500(request):
 #     return JsonResponse({'code': 500, 'error': '服务器错误'}, status=500)
