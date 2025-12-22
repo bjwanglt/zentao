@@ -39,8 +39,8 @@ def over_view(request: HttpRequest, pid):
         return render(request, 'web/overview/dashboard.html',
                       dict(optioin_version=optioin_version, optioin_demand=optioin_demand))
     sys = SysHttpResponse()
-    filter_demand = request.GET.get('demand','')
-    filter_version = request.GET.get('version','')
+    filter_demand = request.GET.get('demand', '')
+    filter_version = request.GET.get('version', '')
     q = Q()
     q.connector = 'AND'
     if filter_version:
@@ -77,7 +77,7 @@ def over_view(request: HttpRequest, pid):
         )
         # # 修改数据
         update_data = list(
-            models.IssuesReply.objects.filter(reply_type=1)
+            models.IssuesReply.objects.filter(reply_type=1, project_id=pid)
             .annotate(project_id=Value(pid), type=Value(2), creator_initial=Upper(Substr('creater__username', 1, 1)))
             .values('type', 'creater__username', 'issues_id', 'issues__desc', 'create_time', 'creator_initial',
                     'project_id')

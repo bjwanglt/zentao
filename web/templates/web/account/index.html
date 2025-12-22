@@ -1,5 +1,6 @@
 {% extends 'layout/basic.html' %}
 {% load static %}
+{% load my_test_tags %}
 
 {% block css %}
     <style>
@@ -471,15 +472,14 @@
         }
 
         .el-image__inner {
-          vertical-align: top;
-          opacity: 1;
+            vertical-align: top;
+            opacity: 1;
         }
 
     </style>
 {% endblock %}
 
 {% block content %}
-
     <!-- 极简顶部区域 - 展示特点小卡片 -->
     <section class="compact-hero">
         <div class="container">

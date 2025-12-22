@@ -220,7 +220,8 @@ DJANGO_CELERY_BEAT_TZ_AWARE = False
 
 # celery-beat配置
 # CELERYBEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = 'web.utils.ZentaoScheduler.CustomDatabaseScheduler'
 
 # CELERY_TASK_SOFT_TIME_LIMIT = 10
 

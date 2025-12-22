@@ -31,6 +31,7 @@ celery -A zentao worker -l info -P eventlet
 celery -A zentao worker -l info -P solo
 celery -A zentao worker -l info -P prefork
 
+celery -A zentao beat
 '''
 
 import web.celery_handlers

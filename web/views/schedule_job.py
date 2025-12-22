@@ -30,9 +30,14 @@ def schedule_job_retry(request: HttpRequest, pid):
         return JsonResponse(sys.get_dict())
     args = res.args
     args = args.replace("'", '"')
+    args = args.replace("(", '[')
+    args = args.replace(")", ']')
+    celery_app.autodiscover_tasks(force=True)
     args = json.loads(args)
     task = celery_app.tasks[task_name]
-    task.apply_async(args=args, headers={'django-celery-beat': {'periodic_task_name': periodic_task_name}})
+    task.apply_async(
+        args=args,
+        headers={'django-celery-beat': {'periodic_task_name': periodic_task_name}})
     sys.status = True
     return JsonResponse(sys.get_dict())
 
@@ -49,10 +54,12 @@ def schedule_job_runonce(request: HttpRequest, pid):
     try:
         args = obj.args
         args = args.replace("'", '"')
+        args = args.replace("(", '[')
+        args = args.replace(")", ']')
         celery_app.autodiscover_tasks(force=True)
         args = json.loads(args)
         task = celery_app.tasks[obj.task]
-        task.apply_async(args=args, headers={'django-celery-beat': {'periodic_task_name': obj.name}})
+        task.apply_async(args=args, headers={'django-celery-beat': {'periodic_task_name': obj.id}})
         res.status = True
     except Exception as e:
         res.status = False
@@ -87,9 +94,20 @@ def schedule_job(request: HttpRequest, pid):
         queryset = PeriodicTask.objects.exclude(name__startswith='celery.').select_related('interval', 'crontab') \
             .values('name', 'args', 'id', 'crontab__hour', 'crontab__minute', 'interval__every', 'interval__period',
                     'enabled', 'task', 'crontab__hour', 'crontab__minute').filter(q).order_by('-id')
+
+        queryset_handle = []
         for i in queryset:
-            i['args'] = ';'.join(json.loads(i['args'])[0])
-        res = get_pagination(queryset, page)
+            try:
+                proid = None
+                email, proid = json.loads(i['args'])
+                i['args'] = ';'.join(json.loads(i['args'])[0])
+            except Exception as e:
+                continue
+            finally:
+                if proid == request.proid:
+                    queryset_handle.append(i)
+
+        res = get_pagination(queryset_handle, page)
         return JsonResponse(res.get_dict())
     if method == 'POST':
         res = SysHttpResponse()

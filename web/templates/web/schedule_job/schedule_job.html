@@ -454,6 +454,7 @@
                 <table class="table table-custom">
                     <thead>
                         <tr>
+                            <th style="width: 10%">任务ID</th>
                             <th style="width: 10%">任务名称</th>
                             <th style="width: 15%">报表类型</th>
                             <th style="width: 15%">接收邮箱</th>
@@ -469,7 +470,10 @@
                 html += `
                     <tr>
                         <td>
-                            <div class="task-name-clickable" onclick="showTaskDetail('${item.name}')" title="点击查看详情">
+                            <div style="font-weight: 500; color: #333;">${item.id}</div>
+                        </td>
+                        <td>
+                            <div class="task-name-clickable" onclick="showTaskDetail('${item.id}')" title="点击查看详情">
                                 <i class="fa fa-info-circle"></i> ${item.name}
                             </div>
                         </td>
@@ -678,9 +682,9 @@
                             <td>${item.date_done}</td>
                             <td>${item.task_args}</td>
                             <td>
-                                ${item.status === 'SUCCESS' ? '/' : `
+                                ${item.status === 'FAILURE' ?  `
                                     <button onclick="retry_task('${item.task_id}','${item.task_name}','${item.periodic_task_name}')" type="button" class="btn btn-primary btn-sm">重试</button>
-                                `}
+                                `:'/'}
                             </td>
                         </tr>
                     `;
