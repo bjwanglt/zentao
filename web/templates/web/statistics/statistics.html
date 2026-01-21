@@ -176,7 +176,7 @@
 
     <script src="{% static 'plugins/daterangepicker/moment.min.js' %}"></script>
     <script src="{% static 'plugins/daterangepicker/daterangepicker.js' %}"></script>
-    <script src="{% static 'plugins/highcharts/highcharts.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 
     <script>
         $(function () {
@@ -305,35 +305,6 @@
         }
 
         function priority(start, end, flag=true) {
-            let config = {
-                chart: {
-                    type: 'pie'
-                },
-                title: {
-                    text: null
-                },
-                credits: {
-                    enabled: false // 关闭版权信息
-                },
-                tooltip: {
-                    pointFormat: '{series.name}: <b>{point.y}</b>'
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        dataLabels: {
-                            enabled: false
-                        },
-                        showInLegend: true
-                    }
-                },
-                series: [{
-                    name: '优先级',
-                    colorByPoint: true,
-                    data: []
-                }]
-            };
             $.ajax({
                 url: API_URL,
                 type: "GET",
@@ -347,8 +318,8 @@
                 dataType: "JSON",
                 success: function (res) {
                     if (res.status) {
-                        config.series[0].data = res.errors_or_data;
-                        Highcharts.chart('priority', config);
+                        // 直接显示pyecharts生成的图表HTML
+                        $('#priority').html(res.chart_html);
                         if(flag && window.link_flag){
                             projectUser(start, end, false);
                         }
@@ -358,56 +329,6 @@
         }
 
         function projectUser(start, end, flag=true) {
-            let config = {
-                chart: {
-                    type: 'column'
-                },
-                title: {
-                    text: null
-                },
-                credits: {
-                    enabled: false // 关闭版权信息
-                },
-                xAxis: {
-                    categories: []
-                },
-
-                yAxis: {
-                    min: 0,
-                    title: {
-                        text: '问题数量'
-                    },
-                    stackLabels: {  // 堆叠数据标签
-                        enabled: true,
-                        style: {
-                            fontWeight: 'bold',
-                            color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
-                        }
-                    }
-                },
-                legend: {
-                    align: 'center',
-                    verticalAlign: 'top'
-
-                },
-                tooltip: {
-                    formatter: function () {
-                        return '<b>' + this.x + '</b><br/>' +
-                            this.series.name + ': ' + this.y + '<br/>' +
-                            '总量: ' + this.point.stackTotal;
-                    }
-                },
-                plotOptions: {
-                    column: {
-                        stacking: 'normal',
-                        dataLabels: {
-                            enabled: false
-                        }
-                    }
-                },
-                series: []
-            };
-            Highcharts.chart('projectUser', config);
             $.ajax({
                 url: API_URL,
                 type: "GET",
@@ -420,11 +341,12 @@
                 },
                 dataType: "JSON",
                 success: function (res) {
-                    config.xAxis.categories = res.errors_or_data.categories;
-                    config.series = res.errors_or_data.series;
-                    Highcharts.chart('projectUser', config);
-                    if(flag && window.link_flag){
-                        priority(start, end, false);
+                    if (res.status) {
+                        // 直接显示pyecharts生成的图表HTML
+                        $('#projectUser').html(res.chart_html);
+                        if(flag && window.link_flag){
+                            priority(start, end, false);
+                        }
                     }
                 }
             })
