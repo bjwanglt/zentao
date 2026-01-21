@@ -13,6 +13,7 @@ celerybeat-schedule.*
 /script
 logs/
 note/
+zentao/local_settings.py
 build/
 develop-eggs/
 dist/
