@@ -10,6 +10,11 @@ from web import models
 from utils.http_response import SysHttpResponse
 from web.models import ProjectDemand, ProjectVersion
 
+from pyecharts.charts import Pie, Bar
+from pyecharts import options as opts
+from pyecharts.globals import ThemeType
+from django.http import HttpResponse
+
 
 def statistics(request: HttpRequest, pid):
     start_str = request.GET.get('start')
@@ -37,12 +42,21 @@ def statistics(request: HttpRequest, pid):
                 .filter(q)
                 .annotate(name_val=F('status')).values('name_val').annotate(y=Count('*'))
             )
+            pie_data = []
             for d in data:
-                d.update(dict(name=status_dict.get(d.get('name_val'))))
-                d.pop('name_val')
-            sys.status = True
-            sys.errors_or_data = data
-            return JsonResponse(sys.get_dict())
+                name = status_dict.get(d.get('name_val'))
+                y = d.get('y')
+                pie_data.append((name, y))
+            # 使用pyecharts生成饼图
+            pie = Pie(init_opts=opts.InitOpts(theme=ThemeType.LIGHT, width="400px", height="300px"))
+            pie.add("优先级", pie_data)
+            pie.set_global_opts(
+                title_opts=opts.TitleOpts(title=None),
+                legend_opts=opts.LegendOpts(orient="vertical", pos_top="15%", pos_left="5%"),
+                tooltip_opts=opts.TooltipOpts(formatter="{a} <br/>{b}: {c}")
+            )
+            pie.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
+            return HttpResponse(pie.render_embed())
         if data_type == 'projess':
             data = list(
                 models.Issues.objects.filter(
@@ -81,11 +95,19 @@ def statistics(request: HttpRequest, pid):
                     for d in data:
                         if d.get('status_display') == status and d.get('username') == user:
                             show_data[status][user] += 1
-            categories = user_list
-            series = [dict(name=k, data=list(v.values())) for k, v in show_data.items()]
-            sys.status = True
-            sys.errors_or_data = dict(categories=categories, series=series)
-            return JsonResponse(sys.get_dict())
+            # 使用pyecharts生成柱状图
+            bar = Bar(init_opts=opts.InitOpts(theme=ThemeType.LIGHT, width="700px", height="300px"))
+            bar.add_xaxis(user_list)
+            for status in status_list:
+                bar.add_yaxis(status, [show_data[status][user] for user in user_list])
+            bar.set_global_opts(
+                title_opts=opts.TitleOpts(title=None),
+                xaxis_opts=opts.AxisOpts(name="人员"),
+                yaxis_opts=opts.AxisOpts(name="问题数量"),
+                legend_opts=opts.LegendOpts(orient="horizontal", pos_top="10%", pos_left="center"),
+                tooltip_opts=opts.TooltipOpts(formatter="{a} <br/>{b}: {c}")
+            )
+            return HttpResponse(bar.render_embed())
     else:
         # 传递 版本/需求 下拉选数值
         demands = list(ProjectDemand.objects
